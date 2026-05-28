@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Precedent — Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .launcher {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      gap: 48px;
+      background: var(--bg);
+    }
+    .launcher-brand {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .launcher-brand h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+    .launcher-brand p {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 50ch;
+      line-height: 1.5;
+    }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 720px;
+    }
+    .screen-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 32px;
+      text-decoration: none;
+      color: var(--fg);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .screen-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.15);
+    }
+    .screen-card .chip {
+      align-self: flex-start;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.15);
+      border-radius: 999px;
+      padding: 4px 12px;
+    }
+    .screen-card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .screen-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .screen-card .action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--fg);
+    }
+    .screen-card .action svg {
+      transition: transform 0.15s ease;
+    }
+    .screen-card:hover .action svg {
+      transform: translateX(3px);
+    }
+    .footer-note {
+      font-size: 0.75rem;
+      color: #52525b;
+    }
+  </style>
+</head>
+<body>
+  <div class="launcher">
+    <div class="launcher-brand">
+      <div class="eyebrow">Prototype</div>
+      <h1>Precedent</h1>
+      <p>Two-screen prototype for the Precedent BRD Generator. A calm, precise tool for Business Analysts in regulated environments.</p>
+    </div>
+
+    <div class="screens">
+      <a href="intake.html" class="double-bezel screen-card">
+        <span class="chip">Screen 1</span>
+        <h2>Brief Intake</h2>
+        <p>Enter project objectives, stakeholders, scope boundaries, target users, and regulatory context into a focused, double-bezel form.</p>
+        <span class="action">
+          Open intake
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </span>
+      </a>
+
+      <a href="review.html" class="double-bezel screen-card">
+        <span class="chip">Screen 2</span>
+        <h2>BRD Review</h2>
+        <p>Review drafted BRD sections in an asymmetrical workspace with critic feedback, severity badges, and inline issue tracking.</p>
+        <span class="action">
+          Open review
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </span>
+      </a>
+    </div>
+
+    <footer class="footer-note">Precedent v1 · 2026</footer>
+  </div>
+</body>
+</html>

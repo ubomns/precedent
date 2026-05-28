@@ -1,0 +1,59 @@
+# ─── Python / Backend ───
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Node / Next.js / Frontend ───
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# ─── Playwright ───
+test-results/
+playwright-report/
+playwright/.cache/
+
+# ─── Environment / Secrets ───
+# Real secrets — never commit. .env.example is the placeholder template and IS tracked.
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# ─── Logs ───
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─── Local test artifacts (kept on disk, not in repo) ───
+backend/test_brd.docx
+backend/test_regen.json
+backend/nul
+
+# ─── OS / Editor cruft ───
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# ─── Misc ───
+coverage/
+.cache/

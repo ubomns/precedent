@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Precedent — BRD Review</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .review-page {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .sidebar {
+      width: 25%;
+      min-width: 280px;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 32px 24px;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .sidebar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .sidebar-header h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .sidebar-header .project-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--fg);
+      line-height: 1.3;
+    }
+    .sidebar-sections {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sidebar-sections h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 4px;
+      padding-left: 12px;
+    }
+    .sidebar-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 32px 40px;
+      overflow-y: auto;
+      background: var(--surface);
+      border-radius: 2rem;
+      margin: 16px 16px 16px 0;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .content-header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .issue-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .card-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-section h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .draft-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .draft-col h4 {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .draft-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .draft-col li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #d4d4d8;
+      line-height: 1.5;
+    }
+    .draft-col li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+    .feedback-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .feedback-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 1rem;
+    }
+    .feedback-item .text {
+      flex: 1;
+      font-size: 0.9rem;
+      color: #d4d4d8;
+      line-height: 1.5;
+    }
+    .toggle-low {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 4px 0;
+      transition: color 0.15s ease;
+    }
+    .toggle-low:hover { color: var(--fg); }
+    .addressed .text { text-decoration: line-through; opacity: 0.5; }
+    .addressed .btn-ghost { opacity: 0.4; pointer-events: none; }
+
+    @media (max-width: 1024px) {
+      .review-page { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; max-width: none; min-width: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      .content-area { margin: 0; border-radius: 0; }
+      .draft-grid { grid-template-columns: 1fr; }
+      .fab { bottom: 16px; right: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="review-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Project</h2>
+        <div class="project-name">Meridian Banking API</div>
+      </div>
+
+      <div class="sidebar-sections">
+        <h3>BRD Sections</h3>
+        <ul class="sidebar-list" id="section-list">
+          <li data-idx="0"><span class="dot"></span>Executive Summary</li>
+          <li data-idx="1"><span class="dot"></span>Business Objective</li>
+          <li data-idx="2" class="active"><span class="dot"></span>Scope</li>
+          <li data-idx="3"><span class="dot"></span>Stakeholders</li>
+          <li data-idx="4"><span class="dot"></span>Functional Requirements</li>
+          <li data-idx="5"><span class="dot"></span>Non-Functional Requirements</li>
+          <li data-idx="6"><span class="dot"></span>Assumptions</li>
+          <li data-idx="7"><span class="dot"></span>Constraints</li>
+          <li data-idx="8"><span class="dot"></span>Acceptance Criteria</li>
+          <li data-idx="9"><span class="dot"></span>User Access Management</li>
+          <li data-idx="10"><span class="dot"></span>Security Controls</li>
+          <li data-idx="11"><span class="dot"></span>Benefits Realization</li>
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="progress-label">
+          <span>Progress</span>
+          <span>8 of 12</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width: 66.7%"></div>
+        </div>
+        <button type="button" class="btn-pill" id="export-word" style="width: 100%;">
+          Export to Word
+        </button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content-area">
+      <div class="content-header">
+        <h1 id="section-title">Scope</h1>
+        <div class="issue-badge">
+          <span class="badge badge-medium">Medium</span>
+          <span class="badge badge-low">Low</span>
+          <span>2 issues found</span>
+        </div>
+      </div>
+
+      <!-- Drafted Content -->
+      <section class="double-bezel card-section">
+        <div class="double-bezel-inner">
+          <h3>Drafted Content</h3>
+          <div class="draft-grid">
+            <div class="draft-col">
+              <h4>In Scope</h4>
+              <ul>
+                <li>Real-time payment processing for domestic transfers</li>
+                <li>Multi-factor authentication for all admin actions</li>
+                <li>Audit logging with 7-year retention</li>
+                <li>REST API with OpenAPI 3.0 specification</li>
+                <li>Webhook notifications for transaction status</li>
+              </ul>
+            </div>
+            <div class="draft-col">
+              <h4>Out of Scope</h4>
+              <ul>
+                <li>Cross-border FX settlement</li>
+                <li>Mobile native applications (iOS / Android)</li>
+                <li>Customer-facing marketing website</li>
+                <li>Third-party plugin marketplace</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Critic Feedback -->
+      <section class="double-bezel card-section">
+        <div class="double-bezel-inner">
+          <h3>Critic Review</h3>
+          <div class="feedback-list" id="feedback-list">
+            <div class="feedback-item" data-severity="medium">
+              <span class="badge badge-medium">Medium</span>
+              <span class="text">Consider clarifying the regulatory boundary for cross-border data.</span>
+              <button type="button" class="btn-ghost mark-addressed">Mark as addressed</button>
+            </div>
+            <div class="feedback-item hidden" data-severity="low" id="low-feedback">
+              <span class="badge badge-low">Low</span>
+              <span class="text">Add a note on data residency for sandbox environments.</span>
+              <button type="button" class="btn-ghost mark-addressed">Mark as addressed</button>
+            </div>
+          </div>
+          <button type="button" class="toggle-low" id="toggle-low">
+            <span id="toggle-label">Show low-severity feedback</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <button type="button" class="fab" aria-label="Export" id="fab-export">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+
+  <script>
+    // Sidebar navigation
+    const sectionList = document.getElementById('section-list');
+    const sectionTitle = document.getElementById('section-title');
+    const sections = [
+      'Executive Summary', 'Business Objective', 'Scope', 'Stakeholders',
+      'Functional Requirements', 'Non-Functional Requirements', 'Assumptions',
+      'Constraints', 'Acceptance Criteria', 'User Access Management',
+      'Security Controls', 'Benefits Realization'
+    ];
+
+    sectionList.querySelectorAll('li').forEach((item) => {
+      item.addEventListener('click', () => {
+        sectionList.querySelectorAll('li').forEach((li) => li.classList.remove('active'));
+        item.classList.add('active');
+        const idx = parseInt(item.getAttribute('data-idx'), 10);
+        sectionTitle.textContent = sections[idx];
+      });
+    });
+
+    // Mark as addressed
+    document.querySelectorAll('.mark-addressed').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.feedback-item');
+        item.classList.add('addressed');
+        btn.textContent = 'Addressed';
+      });
+    });
+
+    // Toggle low severity
+    const lowFeedback = document.getElementById('low-feedback');
+    const toggleLow = document.getElementById('toggle-low');
+    const toggleLabel = document.getElementById('toggle-label');
+    let lowVisible = false;
+
+    toggleLow.addEventListener('click', () => {
+      lowVisible = !lowVisible;
+      lowFeedback.classList.toggle('hidden', !lowVisible);
+      toggleLabel.textContent = lowVisible ? 'Hide low-severity feedback' : 'Show low-severity feedback';
+    });
+
+    // Export actions
+    document.getElementById('export-word').addEventListener('click', () => {
+      alert('Exporting to Word...');
+    });
+    document.getElementById('fab-export').addEventListener('click', () => {
+      alert('Exporting document...');
+    });
+  </script>
+</body>
+</html>
