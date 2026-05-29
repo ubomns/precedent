@@ -4,6 +4,8 @@ A two-agent AI tool for Business Analysts in regulated/enterprise environments. 
 
 The interface is deliberately calm and instrument-grade: deep dark mode, double-bezel cards, emerald accent. The full visual contract lives in [`DESIGN.md`](./DESIGN.md).
 
+Deployed on Vercel as a single project: a Next.js frontend plus a FastAPI app served as a Python serverless function on the same domain.
+
 ---
 
 ## What it does
@@ -24,8 +26,9 @@ Executive Summary · Business Objective · Scope · Stakeholders · Functional R
 
 | Layer | Tech |
 |---|---|
-| Backend | Python 3.14, FastAPI, AsyncOpenAI (`gpt-4.1-mini` with `response_format: json_schema, strict: true`), python-docx, uvicorn |
-| Frontend | Next.js 15 App Router, React 19 RC, TypeScript, Tailwind CSS, Zustand, Framer Motion, Phosphor Icons |
+| API | Python 3.12 (Vercel Python runtime), FastAPI, AsyncOpenAI (`gpt-4.1-mini`, `response_format: json_schema, strict: true`), python-docx |
+| Frontend | Next.js 15.5 App Router, React 19 GA, TypeScript, Tailwind CSS, Zustand, Framer Motion, Phosphor Icons |
+| Hosting | Vercel (single project — Next.js + Python serverless on one domain) |
 | Fonts | Geist + Geist Mono |
 | Tests | Playwright (Chromium) |
 
@@ -35,41 +38,33 @@ Executive Summary · Business Objective · Scope · Stakeholders · Functional R
 
 ### Prerequisites
 
-- Python 3.11+ (project was developed on 3.14)
 - Node.js 20+
 - An OpenAI API key with access to `gpt-4.1-mini`
+- [Vercel CLI](https://vercel.com/docs/cli) installed and authenticated (`npm i -g vercel && vercel login`)
+- Python 3.11+ is only required if you want to inspect/run the FastAPI code outside of `vercel dev`; Vercel installs Python in the cloud build.
 
-### Backend
-
-```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\activate          # Windows
-# source .venv/bin/activate     # macOS / Linux
-
-pip install -r requirements.txt
-copy .env.example .env          # Windows
-# cp .env.example .env          # macOS / Linux
-# then edit .env and paste your real OPENAI_API_KEY
-
-python run_server.py            # serves on http://localhost:8001
-```
-
-API root will respond at `http://localhost:8001/` and the endpoints live under `/api/*`.
-
-### Frontend
+### Run locally
 
 ```bash
 cd frontend
 npm install
-npm run dev                     # serves on http://localhost:3000
+vercel link                     # one time — link to your Vercel project
+vercel env pull                 # pulls OPENAI_API_KEY (and others) into .env.local
+vercel dev                      # Next.js + Python functions on http://localhost:3000
 ```
 
-The frontend looks for the backend at `NEXT_PUBLIC_API_URL`, defaulting to `http://localhost:8001`. To point at a different host, set the variable before running:
+`vercel dev` serves the frontend and the Python `/api/*` routes from a single port, matching the production topology. The frontend's `NEXT_PUBLIC_API_URL` defaults to empty so all API calls go same-origin.
+
+### Frontend-only loop
+
+If you're only iterating on UI:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://10.0.0.5:8001 npm run dev
+cd frontend
+npm run dev                     # Next.js dev server, port 3000
 ```
+
+`/api/*` calls will 404 unless you override `NEXT_PUBLIC_API_URL` (see [`frontend/.env.local.example`](./frontend/.env.local.example)).
 
 ---
 
@@ -77,42 +72,43 @@ NEXT_PUBLIC_API_URL=http://10.0.0.5:8001 npm run dev
 
 ```
 .
-├── backend/
+├── frontend/                       Vercel project root
 │   ├── app/
-│   │   ├── main.py                FastAPI app + CORS + .env loader
-│   │   ├── routers/
-│   │   │   ├── generate.py        /api/generate, /api/critique,
-│   │   │   │                       /api/regenerate-section, /api/apply-critique
-│   │   │   └── export.py          /api/export (streams .docx)
-│   │   ├── agents/
-│   │   │   ├── drafter.py         SECTION_SCHEMAS + draft_section()
-│   │   │   └── critic.py          CRITIC_SCHEMA + critique_section()
-│   │   ├── schemas/brd.py         Pydantic models
-│   │   └── services/renderer.py   .docx renderer with ID normalization
-│   ├── requirements.txt
-│   ├── run_server.py
-│   └── .env.example               OPENAI_API_KEY placeholder
-│
-├── frontend/
-│   ├── app/
-│   │   ├── page.tsx               Launcher
-│   │   ├── intake/page.tsx        Brief intake form
-│   │   ├── review/page.tsx        12-section workspace with critic feedback
-│   │   └── export/page.tsx        Export confirmation + download
+│   │   ├── page.tsx                Launcher
+│   │   ├── intake/page.tsx         Brief intake form
+│   │   ├── review/page.tsx         12-section workspace with critic feedback
+│   │   └── export/page.tsx         Export confirmation + download
 │   ├── components/
-│   │   ├── primitives.tsx         DoubleBezel, PillCTA, GlassNav, FieldLabel, …
-│   │   ├── icons.tsx              Custom icon set
+│   │   ├── primitives.tsx          DoubleBezel, PillCTA, GlassNav, FieldLabel, …
+│   │   ├── icons.tsx               Custom icon set
 │   │   └── theme-toggle.tsx
-│   ├── lib/store.ts               Zustand store (brief + brd + critique state)
-│   ├── tests/                     Playwright specs (home, intake, review, export)
+│   ├── lib/store.ts                Zustand store (brief + brd + critique state)
+│   ├── tests/                      Playwright specs (home, intake, review, export)
+│   ├── api/
+│   │   ├── [...path].py            Vercel ASGI catch-all — re-exports FastAPI app
+│   │   └── _lib/                   Private Python package (underscore keeps Vercel
+│   │       │                       from treating files here as additional routes)
+│   │       ├── main.py             FastAPI app + CORS
+│   │       ├── routers/
+│   │       │   ├── generate.py     /api/generate, /api/critique,
+│   │       │   │                    /api/regenerate-section, /api/apply-critique
+│   │       │   └── export.py       /api/export (streams .docx)
+│   │       ├── agents/
+│   │       │   ├── drafter.py      SECTION_SCHEMAS + draft_section()
+│   │       │   └── critic.py       CRITIC_SCHEMA + critique_section()
+│   │       ├── schemas/brd.py      Pydantic models
+│   │       └── services/renderer.py .docx renderer with ID normalization
+│   ├── requirements.txt            fastapi, pydantic, openai, python-docx
+│   ├── package.json
+│   ├── vercel.json                 framework=nextjs
+│   ├── .env.local.example
 │   ├── tailwind.config.js
-│   ├── playwright.config.ts
-│   └── package.json
+│   └── playwright.config.ts
 │
-├── html/                          Static HTML prototypes (visual reference)
-├── Precedent-handoff/             Original Claude Design handoff bundle
-├── DESIGN.md                      Visual contract (read before any UI work)
-└── CLAUDE.md                      Architecture guide for Claude Code
+├── html/                           Static HTML prototypes (visual reference)
+├── Precedent-handoff/              Original Claude Design handoff bundle
+├── DESIGN.md                       Visual contract (read before any UI work)
+└── CLAUDE.md                       Architecture guide for Claude Code
 ```
 
 ---
@@ -121,7 +117,7 @@ NEXT_PUBLIC_API_URL=http://10.0.0.5:8001 npm run dev
 
 ### Generate
 
-`POST /api/generate` with a `BriefInput`. The backend fan-outs all 12 sections via `asyncio.gather`, each call constrained to its section's JSON schema. Returns `{ brd: { <section_key>: { content, feedback: [] } } }`. Drafter never produces critic feedback — that's a separate pass so the analyst sees the draft first.
+`POST /api/generate` with a `BriefInput`. The FastAPI handler fan-outs all 12 sections via `asyncio.gather`, each call constrained to its section's JSON schema. Returns `{ brd: { <section_key>: { content, feedback: [] } } }`. Drafter never produces critic feedback — that's a separate pass so the analyst sees the draft first.
 
 ### Critique
 
@@ -134,11 +130,15 @@ NEXT_PUBLIC_API_URL=http://10.0.0.5:8001 npm run dev
 
 ### Export
 
-`POST /api/export` with the final BRD. The renderer in `services/renderer.py` walks the schema, normalizes IDs to two-digit zero-padded form (`FR-01`), and emits a styled `.docx` as a `StreamingResponse`.
+`POST /api/export` with the final BRD. The renderer in `_lib/services/renderer.py` walks the schema, normalizes IDs to two-digit zero-padded form (`FR-01`), and emits a styled `.docx` as a `StreamingResponse`.
+
+### How Vercel routes /api/* into Python
+
+`frontend/api/[...path].py` is a Vercel filesystem catch-all route — every URL matching `/api/*` is sent to this file. It re-exports the FastAPI `app` from `_lib.main`. Vercel detects the ASGI symbol and proxies the request without rewriting the path, so the routes mounted under `prefix="/api"` in the FastAPI routers match directly.
 
 ### The 12-section contract is load-bearing
 
-The JSON schemas in `backend/app/agents/drafter.py::SECTION_SCHEMAS` are the single source of truth for what each section looks like. Adding or changing a section means coordinated edits across the drafter schemas, the section list in `generate.py`, the Pydantic models in `schemas/brd.py`, the renderer's `_ID_PREFIXES`, and the frontend's `BRD` interface in `lib/store.ts`. See [`CLAUDE.md`](./CLAUDE.md) for the full list.
+The JSON schemas in `frontend/api/_lib/agents/drafter.py::SECTION_SCHEMAS` are the single source of truth for what each section looks like. Adding or changing a section means coordinated edits across the drafter schemas, the section list in `generate.py`, the Pydantic models in `schemas/brd.py`, the renderer's `_ID_PREFIXES`, and the frontend's `BRD` interface in `lib/store.ts`. See [`CLAUDE.md`](./CLAUDE.md) for the full list.
 
 ---
 
@@ -159,6 +159,24 @@ The intake test stubs `/api/generate` with `page.route`, so it does not consume 
 
 ---
 
+## Deploy
+
+```bash
+cd frontend
+vercel deploy                # preview deployment, returns unique URL
+vercel deploy --prod         # promote to production
+```
+
+Environment variables (currently just `OPENAI_API_KEY`) are managed via:
+
+```bash
+vercel env ls
+vercel env add OPENAI_API_KEY production --value <key> --yes
+vercel env pull                                       # sync to local .env.local
+```
+
+---
+
 ## Design system
 
 `DESIGN.md` is the visual contract. Non-negotiables:
@@ -173,6 +191,6 @@ The intake test stubs `/api/generate` with `page.route`, so it does not consume 
 
 ## Notes
 
-- The `OPENAI_API_KEY` in `backend/.env.example` is a placeholder. Set your own in `backend/.env` (which is gitignored).
+- `OPENAI_API_KEY` lives only on Vercel (Production / Preview / Development) and in your local `.env.local` after `vercel env pull`. It is **not** in this repo.
 - `Precedent-handoff/` is the original Claude Design handoff bundle, kept as historical reference. The live app is the Next.js code in `frontend/`.
-- Both `.env` and `.venv/` are gitignored; so are `node_modules/`, `.next/`, Playwright artifacts, and the local test outputs (`backend/test_brd.docx`, `backend/test_regen.json`, `backend/nul`, `*.log`).
+- Gitignored: `node_modules/`, `.next/`, `.vercel/`, `.venv/`, `__pycache__/`, Playwright artifacts, all `.env*` files except the `.example` placeholders.

@@ -7,7 +7,7 @@ import { useAppStore } from "@/lib/store";
 import { DoubleBezel, PillCTA, GlassNav } from "@/components/primitives";
 import { IconDownload, IconDoc, IconCheck, IconArrow } from "@/components/icons";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 const SECTIONS = [
   { key: "executive_summary", n: "01", title: "Executive Summary" },

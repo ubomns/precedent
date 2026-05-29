@@ -3,9 +3,9 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from app.agents.drafter import draft_section, SECTION_SCHEMAS, get_client
-from app.agents.critic import critique_section
-from app.schemas.brd import BriefInput
+from _lib.agents.drafter import draft_section, SECTION_SCHEMAS, get_client
+from _lib.agents.critic import critique_section
+from _lib.schemas.brd import BriefInput
 
 router = APIRouter()
 

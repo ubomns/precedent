@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.services.renderer import render_brd_to_docx
+from _lib.services.renderer import render_brd_to_docx
 import io
 
 router = APIRouter()

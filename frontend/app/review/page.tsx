@@ -35,7 +35,7 @@ const SECTIONS = [
   { key: "benefits_realization", n: "12", title: "Benefits Realization" },
 ];
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 // Normalize IDs to 2-digit format (FR-1 -> FR-01, FR-001 -> FR-01)
 function normalizeId(id: string): string {

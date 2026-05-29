@@ -1,7 +1,7 @@
 import os
 import json
 from openai import AsyncOpenAI
-from app.schemas.brd import BriefInput
+from _lib.schemas.brd import BriefInput
 
 _client = None
 
