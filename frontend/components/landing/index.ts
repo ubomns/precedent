@@ -1,0 +1,9 @@
+export { Hero } from "./hero";
+export { Problem } from "./problem";
+export { HowItWorks } from "./how-it-works";
+export { SectionsList } from "./sections-list";
+export { SampleOutput } from "./sample-output";
+export { WhoItsFor } from "./who-its-for";
+export { Validation } from "./validation";
+export { CtaFooter } from "./cta-footer";
+export { Footer } from "./footer";

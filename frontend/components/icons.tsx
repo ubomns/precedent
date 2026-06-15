@@ -153,6 +153,50 @@ export function IconArrowRight({ size, className }: IconProps) {
   );
 }
 
+export function IconBank({ size, className }: IconProps) {
+  return (
+    <Icon size={size} className={className}>
+      <path d="M3 21h18M4 18h16M6 18v-8M10 18v-8M14 18v-8M18 18v-8M2 10l10-7 10 7" />
+    </Icon>
+  );
+}
+
+export function IconShieldCheck({ size, className }: IconProps) {
+  return (
+    <Icon size={size} className={className}>
+      <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z" />
+      <path d="m9 12 2 2 4-4" />
+    </Icon>
+  );
+}
+
+export function IconHeartbeat({ size, className }: IconProps) {
+  return (
+    <Icon size={size} className={className}>
+      <path d="M19.5 13.572 12 21l-7.5-7.428A5 5 0 1 1 12 7.006a5 5 0 1 1 7.5 6.572" />
+      <path d="M12 13V7M8 11h8" />
+    </Icon>
+  );
+}
+
+export function IconBuilding({ size, className }: IconProps) {
+  return (
+    <Icon size={size} className={className}>
+      <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h2v6M13 21v-6h2v6" />
+    </Icon>
+  );
+}
+
+export function IconServer({ size, className }: IconProps) {
+  return (
+    <Icon size={size} className={className}>
+      <rect x="2" y="3" width="20" height="6" rx="2" />
+      <rect x="2" y="12" width="20" height="6" rx="2" />
+      <path d="M6 6h.01M6 15h.01" />
+    </Icon>
+  );
+}
+
 export function LogoIcon({ size = 20, className }: IconProps) {
   return (
     <svg
