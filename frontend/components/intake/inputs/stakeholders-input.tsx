@@ -72,6 +72,7 @@ export function StakeholdersInput({
             key={row.id}
             ref={(el) => {
               if (el) rowRefs.current.set(row.id, el);
+              else rowRefs.current.delete(row.id);
             }}
             className="flex gap-2 sm:gap-3 items-start bg-surface-2 rounded-xl border border-white/[0.06] p-3 sm:p-4 transition-colors hover:border-white/[0.10]"
           >
