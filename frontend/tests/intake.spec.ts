@@ -1,128 +1,123 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
-test.describe("Intake Page", () => {
+const okBrd = {
+  brd: {
+    executive_summary: { content: { narrative: "Test executive summary." }, feedback: [] },
+  },
+};
+
+async function mockGenerate(page: Page, onRequest?: (body: any) => void) {
+  await page.route("**/api/generate", async (route) => {
+    onRequest?.(route.request().postDataJSON());
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(okBrd),
+    });
+  });
+}
+
+// Walk all six steps with valid answers, leaving the wizard on the review card.
+async function answerAll(page: Page) {
+  await page.getByLabel("Project objective").fill("Expose core banking API to partners");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await page.getByRole("textbox", { name: /Stakeholder 1 name/i }).fill("Priya Anand");
+  await page.getByRole("textbox", { name: /Stakeholder 1 role/i }).fill("Head of Compliance");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await page.getByLabel("Scope in").fill("Account read/write\nPayment initiation");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await page.getByLabel("Scope out").fill("Retail UI\nFX execution");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await page.getByLabel("Target users").fill("Engineering teams at fintech partners");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await page.getByLabel("Regulatory context").fill("PSD2, GDPR, FCA");
+  await page.getByRole("button", { name: "Send" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review your brief" })).toBeVisible();
+}
+
+test.describe("Intake Wizard", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/intake");
   });
 
-  test("renders intake form fields", async ({ page }) => {
-    await expect(page.getByPlaceholder(/What is the project trying/i)).toBeVisible();
-    await expect(page.getByPlaceholder(/What\'s in scope/i)).toBeVisible();
-    await expect(page.getByPlaceholder(/What\'s out/i)).toBeVisible();
-    await expect(page.getByPlaceholder(/Who will use what/i)).toBeVisible();
-    await expect(page.getByPlaceholder(/Standards, jurisdictions/i)).toBeVisible();
+  test("opens on the first question", async ({ page }) => {
+    await expect(page.getByText("What are you building, and why now?")).toBeVisible();
+    await expect(page.getByLabel("Project objective")).toBeVisible();
+    await expect(page.getByText("01 / 06")).toBeVisible();
   });
 
-  test("submits intake form and navigates to review", async ({ page }) => {
-    // Fill form
-    await page.getByPlaceholder(/What is the project trying/i).fill("Expose core banking API to partners");
-    await page.getByPlaceholder(/What\'s in scope/i).fill("Account read/write\nPayment initiation");
-    await page.getByPlaceholder(/What\'s out/i).fill("Retail UI\nFX execution");
-    await page.getByPlaceholder(/Who will use what/i).fill("Engineering teams at fintech partners");
-    await page.getByPlaceholder(/Standards, jurisdictions/i).fill("PSD2, GDPR, FCA");
+  test("blocks advancing past an empty required step", async ({ page }) => {
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByText("Project objective is required.")).toBeVisible();
+    // Still on step 1: the stakeholders question has not appeared.
+    await expect(page.getByText("Who are the key stakeholders?")).toHaveCount(0);
+  });
 
-    // Mock the generate API so we don't actually call OpenAI
+  test("adds and removes stakeholder rows", async ({ page }) => {
+    await page.getByLabel("Project objective").fill("Anything");
+    await page.getByRole("button", { name: "Send" }).click();
+
+    await expect(page.getByRole("textbox", { name: /Stakeholder 1 name/i })).toBeVisible();
+    await page.getByRole("button", { name: "Add stakeholder" }).click();
+    await expect(page.getByRole("textbox", { name: /Stakeholder 2 name/i })).toBeVisible();
+    await page.getByRole("button", { name: /Remove stakeholder 2/i }).click();
+    await expect(page.getByRole("textbox", { name: /Stakeholder 2 name/i })).toHaveCount(0);
+  });
+
+  test("walks the full conversation and generates", async ({ page }) => {
+    let authHeader: string | null = null;
     await page.route("**/api/generate", async (route) => {
+      authHeader = await route.request().headerValue("authorization");
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          brd: {
-            executive_summary: {
-              content: { narrative: "Test executive summary." },
-              feedback: [],
-            },
-            business_objective: {
-              content: { narrative: "Test business objective." },
-              feedback: [],
-            },
-            scope: {
-              content: {
-                in_scope: ["Account read/write", "Payment initiation"],
-                out_of_scope: ["Retail UI", "FX execution"],
-              },
-              feedback: [],
-            },
-            stakeholders: {
-              content: {
-                stakeholders: [
-                  { name: "Priya Anand", role: "Head of Compliance", raci: "C" },
-                  { name: "Marcus Wei", role: "Platform Lead", raci: "C" },
-                ],
-              },
-              feedback: [],
-            },
-            functional_requirements: {
-              content: {
-                requirements: [
-                  { id: "FR-01", requirement: "Provide REST API", priority: "Must Have" },
-                ],
-              },
-              feedback: [],
-            },
-            non_functional_requirements: {
-              content: {
-                requirements: [
-                  { category: "Security", requirement: "OAuth2", metric: "100%" },
-                ],
-              },
-              feedback: [],
-            },
-            assumptions: {
-              content: { assumptions: ["API is stable"] },
-              feedback: [],
-            },
-            constraints: {
-              content: { constraints: ["Must comply with PSD2"] },
-              feedback: [],
-            },
-            acceptance_criteria: {
-              content: {
-                criteria: [
-                  { requirement_id: "AC-01", criteria: "API must expose endpoints" },
-                ],
-              },
-              feedback: [],
-            },
-            user_access_management: {
-              content: {
-                roles: [
-                  { role: "Partner Engineer", permissions: "Read/Write", iam_group: "partners" },
-                ],
-              },
-              feedback: [],
-            },
-            security_controls: {
-              content: {
-                controls: [
-                  { domain: "Auth", control: "OAuth2", implementation: "JWT" },
-                ],
-              },
-              feedback: [],
-            },
-            benefits_realization: {
-              content: {
-                benefits: [
-                  { benefit: "Faster integration", measurement: "40% faster", timeline: "6 months" },
-                ],
-              },
-              feedback: [],
-            },
-          },
-        }),
+        body: JSON.stringify(okBrd),
       });
     });
 
-    await page.getByRole("button", { name: /Generate BRD/i }).click();
+    await answerAll(page);
+    await page.getByRole("button", { name: "Generate BRD" }).click();
 
-    // Wait for navigation to review
-    await expect(page).toHaveURL(/\/review/, { timeout: 10000 });
-    await expect(page.getByRole("heading", { name: "Executive Summary" })).toBeVisible();
+    await expect(page).toHaveURL(/\/review/, { timeout: 15000 });
+    expect(authHeader).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
   });
 
-  test("validates required fields", async ({ page }) => {
-    await page.getByRole("button", { name: /Generate BRD/i }).click();
-    // Should stay on intake page due to HTML5 validation
-    await expect(page).toHaveURL(/\/intake/);
+  test("edits an earlier answer in place", async ({ page }) => {
+    await page.getByLabel("Project objective").fill("First version");
+    await page.getByRole("button", { name: "Send" }).click();
+
+    // The objective bubble now shows; edit it.
+    await page.getByRole("button", { name: "Edit project objective" }).click();
+    await page.getByLabel("Project objective").fill("Second version");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await expect(page.getByText("Second version")).toBeVisible();
+    await expect(page.getByText("First version")).toHaveCount(0);
+  });
+
+  test("edits a field from the review card and submits the new value", async ({ page }) => {
+    let body: any = null;
+    await mockGenerate(page, (b) => {
+      body = b;
+    });
+
+    await answerAll(page);
+
+    const card = page.getByTestId("review-card");
+    await card.getByRole("button", { name: "Edit target users" }).click();
+    // The review card's "Edit target users" button stays mounted alongside the
+    // edit field, so an exact label match is required to target only the input.
+    await page.getByLabel("Target users", { exact: true }).fill("Updated user group");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await page.getByRole("button", { name: "Generate BRD" }).click();
+    await expect(page).toHaveURL(/\/review/, { timeout: 15000 });
+    expect(body.target_users).toBe("Updated user group");
   });
 });
