@@ -2,6 +2,7 @@
 
 import { Nav } from "@/components/design-system/nav";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import { AuthNavActions } from "@/components/auth/auth-nav-actions";
 import {
   Hero,
   Problem,
@@ -24,7 +25,7 @@ const NAV_ITEMS = [
 export default function LandingPage() {
   return (
     <>
-      <Nav items={NAV_ITEMS} />
+      <Nav items={NAV_ITEMS} actions={<AuthNavActions />} />
 
       <main className="overflow-x-hidden">
         <Hero />

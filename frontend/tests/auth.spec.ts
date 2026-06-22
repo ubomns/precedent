@@ -55,3 +55,16 @@ test.describe("Password reset", () => {
     await expect(page.getByText(/check your email/i)).toBeVisible();
   });
 });
+
+test.describe("Nav auth state", () => {
+  test("shows Sign in when logged out", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+  });
+
+  test("shows Log out when authenticated", async ({ page }) => {
+    await stubAuth(page);
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
+  });
+});

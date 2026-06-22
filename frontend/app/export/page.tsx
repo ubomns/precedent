@@ -14,6 +14,7 @@ import {
   BodySmall,
 } from "@/components/design-system";
 import { Nav } from "@/components/design-system/nav";
+import { AuthNavActions } from "@/components/auth/auth-nav-actions";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import {
   IconDownload,
@@ -149,7 +150,7 @@ export default function ExportPage() {
         }}
       />
 
-      <Nav items={navItems} />
+      <Nav items={navItems} actions={<AuthNavActions />} />
 
       <main className="relative z-0 flex-1 flex flex-col items-center px-4 sm:px-6 pt-24 sm:pt-28 pb-20 sm:pb-24">
         <div className="flex flex-col items-center text-center max-w-[640px] mb-8 sm:mb-10">

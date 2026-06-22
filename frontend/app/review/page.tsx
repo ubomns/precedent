@@ -18,6 +18,7 @@ import {
   Badge,
 } from "@/components/design-system";
 import { Nav } from "@/components/design-system/nav";
+import { AuthNavActions } from "@/components/auth/auth-nav-actions";
 import {
   IconArrow,
   IconArrowLeft,
@@ -850,15 +851,18 @@ export default function ReviewPage() {
   ];
 
   const navActions = (
-    <Button
-      size="sm"
-      variant="primary"
-      onClick={exportBRD}
-      loading={exporting}
-      trailingIcon={<IconDownload size={14} />}
-    >
-      Export
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={exportBRD}
+        loading={exporting}
+        trailingIcon={<IconDownload size={14} />}
+      >
+        Export
+      </Button>
+      <AuthNavActions />
+    </div>
   );
 
   return (
