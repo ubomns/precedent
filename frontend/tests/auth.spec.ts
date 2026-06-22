@@ -20,3 +20,26 @@ test.describe("Route protection", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("Auth forms", () => {
+  test("login shows validation on empty submit", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByText("Email is required.")).toBeVisible();
+  });
+
+  test("signup success shows check-your-email", async ({ page }) => {
+    await page.route("**/auth/v1/signup**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ user: { id: "x" }, session: null }),
+      })
+    );
+    await page.goto("/signup");
+    await page.getByLabel("Email").fill("new@example.com");
+    await page.getByLabel("Password").fill("supersecret1");
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expect(page.getByText(/check your email/i)).toBeVisible();
+  });
+});
