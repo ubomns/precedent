@@ -7,10 +7,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // A single `next dev` server cold-compiles routes on first visit; too many
-  // parallel workers all triggering compiles at once can starve navigations past
-  // their assertion timeouts. Cap local concurrency to keep runs reliable.
-  workers: process.env.CI ? 1 : 2,
+  // The suite runs against a single `next dev` server that cold-compiles routes
+  // on first visit. Parallel workers all triggering compiles at once intermittently
+  // starve navigations (even `page.goto`) past their timeouts, so run serially.
+  // Fast enough for this suite (~3 min) and deterministic regardless of machine load.
+  workers: 1,
   reporter: "html",
   timeout: 60_000,
   use: {

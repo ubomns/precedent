@@ -3,10 +3,11 @@ import { walkIntakeWizard } from "./helpers";
 
 test.describe("Export Page", () => {
   test.beforeEach(async ({ page }) => {
+    let generateAuth: string | null = null;
     await page.route("**/api/generate", async (route: any) => {
-      expect(await route.request().headerValue("authorization")).toBe(
-        `Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`
-      );
+      // Capture and assert after navigation; a throw inside the handler would
+      // leave the route unfulfilled and surface only as a nav timeout.
+      generateAuth = await route.request().headerValue("authorization");
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -32,6 +33,7 @@ test.describe("Export Page", () => {
     await walkIntakeWizard(page);
     await page.getByRole("button", { name: /Generate BRD/i }).click();
     await expect(page).toHaveURL(/\/review/, { timeout: 15000 });
+    expect(generateAuth).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
 
     // Navigate client-side to preserve ephemeral Zustand state.
     await page
@@ -55,10 +57,9 @@ test.describe("Export Page", () => {
   });
 
   test("export button triggers download", async ({ page }) => {
+    let exportAuth: string | null = null;
     await page.route("**/api/export", async (route: any) => {
-      expect(await route.request().headerValue("authorization")).toBe(
-        `Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`
-      );
+      exportAuth = await route.request().headerValue("authorization");
       await route.fulfill({
         status: 200,
         contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -75,6 +76,7 @@ test.describe("Export Page", () => {
     ]);
 
     expect(download.suggestedFilename()).toMatch(/BRD\.docx/i);
+    expect(exportAuth).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
   });
 
   test("back-to-review link navigates to review", async ({ page }) => {
