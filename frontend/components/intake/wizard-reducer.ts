@@ -15,6 +15,7 @@ export interface WizardState {
   status: WizardStatus;
   stepError: string | null;
   submitError: string;
+  quotaExceeded: boolean;
   nextStakeholderId: number;
 }
 
@@ -28,7 +29,8 @@ export type WizardAction =
   | { type: "EDIT"; key: StepKey }
   | { type: "SAVE_EDIT" }
   | { type: "BEGIN_SUBMIT" }
-  | { type: "SUBMIT_FAILURE"; message: string };
+  | { type: "SUBMIT_FAILURE"; message: string }
+  | { type: "QUOTA_EXCEEDED" };
 
 export const initialState: WizardState = {
   answers: emptyAnswers,
@@ -37,6 +39,7 @@ export const initialState: WizardState = {
   status: "answering",
   stepError: null,
   submitError: "",
+  quotaExceeded: false,
   nextStakeholderId: emptyAnswers.stakeholders.length + 1,
 };
 
@@ -112,10 +115,13 @@ export function reduce(state: WizardState, action: WizardAction): WizardState {
     }
 
     case "BEGIN_SUBMIT":
-      return { ...state, status: "submitting", submitError: "" };
+      return { ...state, status: "submitting", submitError: "", quotaExceeded: false };
 
     case "SUBMIT_FAILURE":
       return { ...state, status: "error", submitError: action.message };
+
+    case "QUOTA_EXCEEDED":
+      return { ...state, status: "error", quotaExceeded: true };
 
     default:
       return state;

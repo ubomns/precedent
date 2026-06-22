@@ -39,12 +39,25 @@ export function useWizard(): UseWizard {
         body: JSON.stringify(brief),
       });
 
+      if (res.status === 401) {
+        setGenerating(false);
+        router.push(`/login?next=${encodeURIComponent("/intake")}`);
+        return;
+      }
+
+      if (res.status === 402) {
+        dispatch({ type: "QUOTA_EXCEEDED" });
+        setGenerating(false);
+        return;
+      }
+
       if (!res.ok) {
         const body = await res.text();
         let message = `Server error (${res.status})`;
         try {
           const parsed = JSON.parse(body);
-          if (parsed.detail) message = parsed.detail;
+          if (parsed?.error?.message) message = parsed.error.message;
+          else if (parsed.detail) message = parsed.detail;
           else if (parsed.message) message = parsed.message;
         } catch {
           // keep generic message

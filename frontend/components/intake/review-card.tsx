@@ -55,6 +55,24 @@ export function ReviewCard({
         </div>
       ) : null}
 
+      {state.quotaExceeded ? (
+        <div
+          role="alert"
+          className="mt-4 rounded-lg bg-surface-2 border border-border-strong px-4 py-3"
+        >
+          <p className="text-body text-ink">You've used your 3 free BRDs.</p>
+          <p className="mt-1 text-body-sm text-secondary">
+            <a
+              href="mailto:hello@nsikak.dev?subject=Upgrade%20Precedent"
+              className="text-accent hover:text-accent-hover"
+            >
+              Upgrade for unlimited generations
+            </a>
+            .
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-5">
         <Button
           type="button"
