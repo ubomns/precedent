@@ -43,3 +43,15 @@ test.describe("Auth forms", () => {
     await expect(page.getByText(/check your email/i)).toBeVisible();
   });
 });
+
+test.describe("Password reset", () => {
+  test("forgot-password submits and confirms", async ({ page }) => {
+    await page.route("**/auth/v1/recover**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: "{}" })
+    );
+    await page.goto("/forgot-password");
+    await page.getByLabel("Email").fill("a@b.com");
+    await page.getByRole("button", { name: "Send reset link" }).click();
+    await expect(page.getByText(/check your email/i)).toBeVisible();
+  });
+});
