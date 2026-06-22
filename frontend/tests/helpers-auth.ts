@@ -5,7 +5,7 @@ export const TEST_EMAIL = "tester@example.com";
 // Any non-empty string; FastAPI is mocked in E2E, so the token is never verified.
 export const TEST_ACCESS_TOKEN = "e2e-access-token";
 
-const PROJECT_REF = "localhost"; // matches NEXT_PUBLIC_SUPABASE_URL=http://localhost:3001
+const PROJECT_REF = "localhost"; // matches NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 
 function fakeSession() {
   return {

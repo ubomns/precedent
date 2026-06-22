@@ -27,15 +27,22 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: "npx next dev -p 3001",
-    url: "http://localhost:3001",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      NEXT_PUBLIC_API_SECRET_KEY: process.env.NEXT_PUBLIC_API_SECRET_KEY,
-      NEXT_PUBLIC_SUPABASE_URL: "http://localhost:3001",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "stub-anon-key",
+  webServer: [
+    {
+      command: "npx next dev -p 3001",
+      url: "http://localhost:3001",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        NEXT_PUBLIC_API_SECRET_KEY: process.env.NEXT_PUBLIC_API_SECRET_KEY,
+        NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: "stub-anon-key",
+      },
     },
-  },
+    {
+      command: "node tests/mock-supabase-server.mjs",
+      port: 54321,
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });
