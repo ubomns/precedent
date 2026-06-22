@@ -50,3 +50,27 @@ def test_generate_402_when_quota_exceeded(monkeypatch):
 def test_generate_401_without_token():
     resp = client.post("/api/generate", json=_brief())
     assert resp.status_code == 401
+
+
+def test_generate_releases_quota_on_fan_out_failure(monkeypatch):
+    """Quota consumed before fan-out → release_quota called when fan-out raises."""
+    released_calls = []
+
+    async def fake_consume(user_id):
+        assert user_id == "user-123"
+        return {"allowed": True, "remaining": 2, "tier": "registered"}
+
+    async def fake_release(user_id):
+        released_calls.append(user_id)
+        return {"released": True}
+
+    async def failing_draft_section(section_name, brief):
+        raise RuntimeError("OpenAI 429 – rate limit exceeded")
+
+    monkeypatch.setattr(generate_router, "consume_quota", fake_consume)
+    monkeypatch.setattr(generate_router, "release_quota", fake_release)
+    monkeypatch.setattr(generate_router, "draft_section", failing_draft_section)
+
+    resp = client.post("/api/generate", json=_brief(), headers=_auth())
+    assert resp.status_code == 500
+    assert released_calls == ["user-123"]

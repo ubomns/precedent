@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -12,7 +13,7 @@ from _lib.agents.drafter import draft_section, SECTION_SCHEMAS, get_client
 from _lib.auth import get_current_user
 from _lib.limiter import limiter
 from _lib.schemas.brd import BriefInput, MAX_LONG_TEXT
-from _lib.services.quota import consume_quota
+from _lib.services.quota import consume_quota, release_quota
 
 router = APIRouter()
 
@@ -131,10 +132,15 @@ async def generate_brd(
 
         return {"brd": brd_data}
     except Exception as e:
+        # Quota was already consumed above; refund it since generation failed.
+        try:
+            await release_quota(current_user["user_id"])
+        except Exception:
+            logging.error(
+                "Failed to release quota after generation failure for user %s",
+                current_user["user_id"],
+            )
         raise HTTPException(status_code=500, detail=str(e))
-
-
-import logging
 
 
 @router.post("/critique")

@@ -92,3 +92,30 @@ $$;
 
 -- Only the service role (which bypasses these grants) should call this.
 revoke all on function public.consume_quota(uuid) from public, anon, authenticated;
+
+-- Compensating action: refund one consumed generation if drafting fails after consume_quota.
+-- Advisory-locked per-user (same key as consume_quota) so it serializes with consumes;
+-- ledger rows are fungible (count-based), so deleting the most-recent row is correct.
+create or replace function public.release_quota(p_user_id uuid)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_deleted_id uuid;
+begin
+  perform pg_advisory_xact_lock(hashtext(p_user_id::text));
+  delete from public.brd_generations
+  where id = (
+    select id from public.brd_generations
+    where user_id = p_user_id
+    order by created_at desc
+    limit 1
+  )
+  returning id into v_deleted_id;
+  return json_build_object('released', v_deleted_id is not null);
+end;
+$$;
+
+revoke all on function public.release_quota(uuid) from public, anon, authenticated;
