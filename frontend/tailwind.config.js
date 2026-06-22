@@ -63,7 +63,7 @@ module.exports = {
           { lineHeight: "1.6", letterSpacing: "0", fontWeight: "400" },
         ],
         body: [
-          "var(--text-body)",
+          "var(--font-size-body)",
           { lineHeight: "1.6", letterSpacing: "0", fontWeight: "400" },
         ],
         "body-sm": [
