@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from _lib.limiter import limiter
@@ -28,6 +29,9 @@ ALLOWED_ORIGINS = [
 app = FastAPI(title="Precedent API", version="1.0.0")
 
 app.state.limiter = limiter
+# Apply the limiter's default_limits to every route (decorated routes keep their
+# stricter per-route limits; the tightest applicable limit wins).
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.exception_handler(HTTPException)
