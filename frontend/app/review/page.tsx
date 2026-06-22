@@ -1,23 +1,34 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAppStore, SectionOutput } from "@/lib/store";
-import { DoubleBezel, PillCTA, SeverityBadge, GlassNav } from "@/components/primitives";
+
+import { useAppStore, type SectionOutput, type BRD } from "@/lib/store";
+import { apiUrl, apiHeaders } from "@/lib/api";
 import {
-  IconChevron,
-  IconChevronDown,
-  IconCheck,
-  IconShield,
-  IconDoc,
-  IconSparkle,
-  IconDownload,
-  IconX,
+  Button,
+  Card,
+  Eyebrow,
+  Heading1,
+  Heading2,
+  Body,
+  BodySmall,
+  Caption,
+  Mono,
+  Badge,
+} from "@/components/design-system";
+import { Nav } from "@/components/design-system/nav";
+import {
   IconArrow,
-  IconHome,
   IconArrowLeft,
   IconArrowRight,
+  IconCheck,
+  IconChevronDown,
+  IconDoc,
+  IconDownload,
+  IconShield,
+  IconSparkle,
+  IconX,
 } from "@/components/icons";
 
 const SECTIONS = [
@@ -33,18 +44,9 @@ const SECTIONS = [
   { key: "user_access_management", n: "10", title: "User Access Management" },
   { key: "security_controls", n: "11", title: "Security Controls" },
   { key: "benefits_realization", n: "12", title: "Benefits Realization" },
-];
+] as const;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
-
-// Normalize IDs to 2-digit format (FR-1 -> FR-01, FR-001 -> FR-01)
-function normalizeId(id: string): string {
-  if (!id) return "";
-  const match = id.match(/^([A-Za-z]+)-(\d+)$/);
-  if (!match) return id;
-  const num = parseInt(match[2], 10);
-  return `${match[1]}-${String(num).padStart(2, "0")}`;
-}
+type SectionKey = (typeof SECTIONS)[number]["key"];
 
 const ID_PREFIXES: Record<string, string> = {
   functional_requirements: "FR",
@@ -54,6 +56,14 @@ const ID_PREFIXES: Record<string, string> = {
   security_controls: "SC",
   benefits_realization: "BR",
 };
+
+function normalizeId(id: string): string {
+  if (!id) return "";
+  const match = id.match(/^([A-Za-z]+)-(\d+)$/);
+  if (!match) return id;
+  const num = parseInt(match[2], 10);
+  return `${match[1]}-${String(num).padStart(2, "0")}`;
+}
 
 function getDisplayId(sectionKey: string, item: any, index: number): string {
   const prefix = ID_PREFIXES[sectionKey];
@@ -65,7 +75,6 @@ function getDisplayId(sectionKey: string, item: any, index: number): string {
   return "";
 }
 
-// Sanitize project name for filename
 function sanitizeFilename(name: string): string {
   return name
     .replace(/[^a-zA-Z0-9\s-]/g, "")
@@ -73,169 +82,35 @@ function sanitizeFilename(name: string): string {
     .slice(0, 50);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sidebar
-// ─────────────────────────────────────────────────────────────────────────────
-function Sidebar({
-  project,
-  activeKey,
-  onSelect,
-  brd,
-  visitedSections,
-}: {
-  project: string;
-  activeKey: string;
-  onSelect: (key: string) => void;
-  brd: Record<string, SectionOutput | undefined>;
-  visitedSections: Set<string>;
-}) {
-  const router = useRouter();
-  const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-
-  useEffect(() => {
-    const el = itemRefs.current.get(activeKey);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }, [activeKey]);
-
-  const handleSelect = (key: string) => {
-    onSelect(key);
-  };
-
-  return (
-    <aside className="w-1/4 min-w-[280px] max-w-[360px] shrink-0 flex flex-col gap-6 py-6 pl-6 pr-2 h-full overflow-hidden">
-      {/* Top: back to home + project */}
-      <div className="flex flex-col gap-5 shrink-0">
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 group w-max"
-          title="Back to Home"
-        >
-          <span className="w-7 h-7 rounded-full bg-white/[0.05] ring-1 ring-white/10 flex items-center justify-center text-secondary group-hover:text-emerald-400 group-hover:ring-emerald-500/30 transition-colors">
-            <IconHome size={13} />
-          </span>
-          <span className="text-[13px] font-medium tracking-tight text-ink group-hover:text-emerald-400 transition-colors">
-            Precedent
-          </span>
-        </button>
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-tertiary font-medium">
-            Project
-          </span>
-          <span className="text-[14px] font-medium text-ink tracking-tight leading-snug break-words">
-            {project}
-          </span>
-          <span className="text-[11px] font-mono text-tertiary mt-0.5">
-            brd-2026-0418
-          </span>
-        </div>
-      </div>
-
-      <div className="border-t hairline shrink-0" />
-
-      {/* Section list */}
-      <div className="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto -mr-2 pr-2">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-tertiary font-medium px-2 pb-1">
-          BRD Sections
-        </div>
-        {SECTIONS.map((s) => {
-          const isActive = s.key === activeKey;
-          const sec = brd[s.key];
-          const hasUnvisitedFeedback = sec?.feedback?.some(
-            (f) => !f.accepted && !f.rejected && !visitedSections.has(s.key)
-          );
-          const hasAnyFeedback = sec?.feedback?.some(
-            (f) => !f.accepted && !f.rejected
-          );
-          return (
-            <button
-              key={s.key}
-              ref={(el) => {
-                if (el) itemRefs.current.set(s.key, el);
-              }}
-              onClick={() => handleSelect(s.key)}
-              className={[
-                "group relative flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-colors",
-                isActive ? "bg-emerald-500/[0.08]" : "hover:bg-white/[0.02]",
-              ].join(" ")}
-            >
-              <span className="w-4 flex justify-center">
-                {isActive ? (
-                  <span className="nav-dot" />
-                ) : (
-                  <span className="text-[10px] font-mono text-tertiary tabular-nums">
-                    {s.n}
-                  </span>
-                )}
-              </span>
-              <span
-                className={`text-[13px] tracking-tight flex-1 leading-tight ${
-                  isActive
-                    ? "text-emerald-400 font-medium"
-                    : "text-body group-hover:text-ink"
-                }`}
-              >
-                {s.title}
-              </span>
-              {hasAnyFeedback && (
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    hasUnvisitedFeedback ? "bg-amber-400" : "bg-zinc-600"
-                  }`}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Progress + CTA */}
-      <div className="flex flex-col gap-3 pt-2 shrink-0">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline justify-between">
-            <span className="text-[10px] uppercase tracking-[0.18em] text-tertiary font-medium">
-              Progress
-            </span>
-            <span className="text-[11px] font-mono text-secondary tabular-nums">
-              {visitedSections.size} of {SECTIONS.length} sections reviewed
-            </span>
-          </div>
-          <div className="h-[3px] rounded-full bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full bg-emerald-500 transition-all duration-700"
-              style={{
-                width: `${(visitedSections.size / SECTIONS.length) * 100}%`,
-                boxShadow: "0 0 8px rgba(16,185,129,0.5)",
-              }}
-            />
-          </div>
-        </div>
-
-      </div>
-    </aside>
-  );
+function countWords(brd: BRD): number {
+  try {
+    return JSON.stringify(brd)
+      .split(/\s+/)
+      .filter(Boolean).length;
+  } catch {
+    return 0;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Table Renderer for tabulated data
+// Data table for structured sections
 // ─────────────────────────────────────────────────────────────────────────────
 function DataTable({
   headers,
   rows,
 }: {
   headers: string[];
-  rows: Array<{ key: string; cells: React.ReactNode[] }>;
+  rows: Array<{ key: string | number; cells: React.ReactNode[] }>;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto -mx-2 px-2">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b hairline">
+          <tr className="border-b border-white/[0.06]">
             {headers.map((h, i) => (
               <th
                 key={i}
-                className="pb-3 pr-4 text-[10px] uppercase tracking-[0.18em] text-tertiary font-medium"
+                className="pb-3 pr-4 text-caption uppercase tracking-[0.14em] text-tertiary font-medium"
               >
                 {h}
               </th>
@@ -244,9 +119,9 @@ function DataTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.key} className="border-b hairline">
+            <tr key={row.key} className="border-b border-white/[0.06]">
               {row.cells.map((cell, i) => (
-                <td key={i} className="py-3.5 pr-4 text-[13.5px] text-body leading-relaxed">
+                <td key={i} className="py-3.5 pr-4 text-body leading-relaxed">
                   {cell}
                 </td>
               ))}
@@ -259,63 +134,52 @@ function DataTable({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section content renderer
+// Section body renderer
 // ─────────────────────────────────────────────────────────────────────────────
 function SectionBody({
   sectionKey,
   content,
 }: {
-  sectionKey: string;
+  sectionKey: SectionKey;
   content: Record<string, any>;
 }) {
   if (!content || Object.keys(content).length === 0) {
     return (
-      <p className="text-[14px] text-tertiary italic">No content generated.</p>
+      <p className="text-body text-tertiary italic">No content generated.</p>
     );
   }
 
-  // Scope
   if (sectionKey === "scope") {
     return (
-      <div className="grid grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-400 font-mono">
+            <Caption className="uppercase tracking-[0.14em] text-accent">
               In Scope
-            </span>
-            <span className="text-[10px] font-mono text-tertiary">
-              — {(content.in_scope || []).length}
-            </span>
+            </Caption>
+            <Caption className="text-tertiary">— {(content.in_scope || []).length}</Caption>
           </div>
           <ul className="flex flex-col gap-3">
             {(content.in_scope || []).map((it: string, i: number) => (
-              <li
-                key={i}
-                className="flex gap-3 text-[14px] text-body leading-relaxed"
-              >
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <span className="text-justify">{it}</span>
+              <li key={i} className="flex gap-3 text-body leading-relaxed">
+                <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                <span>{it}</span>
               </li>
             ))}
           </ul>
         </div>
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-tertiary font-mono">
+            <Caption className="uppercase tracking-[0.14em] text-tertiary">
               Out of Scope
-            </span>
-            <span className="text-[10px] font-mono text-tertiary">
-              — {(content.out_of_scope || []).length}
-            </span>
+            </Caption>
+            <Caption className="text-tertiary">— {(content.out_of_scope || []).length}</Caption>
           </div>
           <ul className="flex flex-col gap-3">
             {(content.out_of_scope || []).map((it: string, i: number) => (
-              <li
-                key={i}
-                className="flex gap-3 text-[14px] text-tertiary leading-relaxed"
-              >
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-tertiary/40 shrink-0" />
-                <span className="text-justify">{it}</span>
+              <li key={i} className="flex gap-3 text-body leading-relaxed text-secondary">
+                <span className="mt-2 w-1.5 h-1.5 rounded-full bg-tertiary/40 shrink-0" />
+                <span>{it}</span>
               </li>
             ))}
           </ul>
@@ -324,7 +188,6 @@ function SectionBody({
     );
   }
 
-  // Stakeholders — TABLE
   if (sectionKey === "stakeholders") {
     const items = content.stakeholders || [];
     return (
@@ -334,25 +197,23 @@ function SectionBody({
           key: i,
           cells: [
             <div key="name" className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-white/[0.05] ring-1 ring-white/10 flex items-center justify-center text-[11px] font-medium text-ink">
+              <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-white/10 flex items-center justify-center text-caption font-medium text-ink">
                 {p.name
                   .split(" ")
                   .map((x: string) => x[0])
                   .join("")}
               </span>
-              <span className="text-[14px] text-ink tracking-tight">
-                {p.name}
-              </span>
+              <span className="text-body text-ink tracking-tight">{p.name}</span>
             </div>,
-            <span key="role" className="text-secondary text-justify">
+            <span key="role" className="text-secondary">
               {p.role}
             </span>,
             <span
               key="raci"
-              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider ${
+              className={`inline-flex rounded-full px-2 py-0.5 text-caption font-mono uppercase tracking-wider ${
                 p.raci === "A"
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : "bg-white/[0.04] text-secondary"
+                  ? "bg-accent/10 text-accent"
+                  : "bg-surface-2 text-secondary"
               }`}
             >
               {p.raci}
@@ -363,7 +224,6 @@ function SectionBody({
     );
   }
 
-  // Functional Requirements
   if (sectionKey === "functional_requirements") {
     const items = content.requirements || [];
     return (
@@ -372,18 +232,18 @@ function SectionBody({
         rows={items.map((r: any, i: number) => ({
           key: r.id || i,
           cells: [
-            <span key="id" className="font-mono text-[12px] text-emerald-400/80">
+            <Mono key="id" className="text-accent">
               {getDisplayId(sectionKey, r, i)}
-            </span>,
-            <span key="req" className="text-justify">{r.requirement}</span>,
+            </Mono>,
+            <span key="req">{r.requirement}</span>,
             <span
               key="pri"
-              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider whitespace-nowrap ${
+              className={`inline-flex rounded-full px-2 py-0.5 text-caption uppercase tracking-wider whitespace-nowrap ${
                 r.priority === "Must Have"
-                  ? "bg-emerald-500/10 text-emerald-400"
+                  ? "bg-accent/10 text-accent"
                   : r.priority === "Should Have"
-                  ? "bg-amber-500/10 text-amber-400"
-                  : "bg-zinc-500/10 text-secondary"
+                  ? "bg-[var(--badge-medium-bg)] text-[var(--badge-medium-text)]"
+                  : "bg-surface-2 text-secondary"
               }`}
             >
               {r.priority}
@@ -394,7 +254,6 @@ function SectionBody({
     );
   }
 
-  // Non-Functional Requirements
   if (sectionKey === "non_functional_requirements") {
     const items = content.requirements || [];
     return (
@@ -403,23 +262,22 @@ function SectionBody({
         rows={items.map((r: any, i: number) => ({
           key: i,
           cells: [
-            <span key="id" className="font-mono text-[12px] text-emerald-400/80">
+            <Mono key="id" className="text-accent">
               {getDisplayId(sectionKey, r, i)}
-            </span>,
-            <span key="cat" className="text-emerald-400/80 text-[13px]">
+            </Mono>,
+            <span key="cat" className="text-accent text-body">
               {r.category}
             </span>,
-            <span key="req" className="text-justify">{r.requirement}</span>,
-            <span key="met" className="font-mono text-[12px] text-secondary">
+            <span key="req">{r.requirement}</span>,
+            <Mono key="met" className="text-secondary">
               {r.metric}
-            </span>,
+            </Mono>,
           ],
         }))}
       />
     );
   }
 
-  // Acceptance Criteria
   if (sectionKey === "acceptance_criteria") {
     const items = content.criteria || [];
     return (
@@ -428,17 +286,16 @@ function SectionBody({
         rows={items.map((c: any, i: number) => ({
           key: i,
           cells: [
-            <span key="id" className="font-mono text-[12px] text-emerald-400/80">
+            <Mono key="id" className="text-accent">
               {getDisplayId(sectionKey, c, i)}
-            </span>,
-            <span key="crit" className="text-justify">{c.criteria}</span>,
+            </Mono>,
+            <span key="crit">{c.criteria}</span>,
           ],
         }))}
       />
     );
   }
 
-  // User Access Management
   if (sectionKey === "user_access_management") {
     const items = content.roles || [];
     return (
@@ -447,23 +304,22 @@ function SectionBody({
         rows={items.map((r: any, i: number) => ({
           key: i,
           cells: [
-            <span key="id" className="font-mono text-[12px] text-emerald-400/80">
+            <Mono key="id" className="text-accent">
               {getDisplayId(sectionKey, r, i)}
-            </span>,
-            <span key="role" className="text-emerald-400/80 text-[13px]">
+            </Mono>,
+            <span key="role" className="text-accent text-body">
               {r.role}
             </span>,
-            <span key="perm" className="text-justify">{r.permissions}</span>,
-            <span key="iam" className="font-mono text-[12px] text-secondary">
+            <span key="perm">{r.permissions}</span>,
+            <Mono key="iam" className="text-secondary">
               {r.iam_group}
-            </span>,
+            </Mono>,
           ],
         }))}
       />
     );
   }
 
-  // Security Controls
   if (sectionKey === "security_controls") {
     const items = content.controls || [];
     return (
@@ -472,21 +328,22 @@ function SectionBody({
         rows={items.map((c: any, i: number) => ({
           key: i,
           cells: [
-            <span key="id" className="font-mono text-[12px] text-emerald-400/80">
+            <Mono key="id" className="text-accent">
               {getDisplayId(sectionKey, c, i)}
-            </span>,
-            <span key="dom" className="text-emerald-400/80 text-[13px]">
+            </Mono>,
+            <span key="dom" className="text-accent text-body">
               {c.domain}
             </span>,
-            <span key="ctrl" className="text-justify">{c.control}</span>,
-            <span key="impl" className="text-justify">{c.implementation}</span>,
+            <span key="ctrl">{c.control}</span>,
+            <span key="impl" className="text-secondary">
+              {c.implementation}
+            </span>,
           ],
         }))}
       />
     );
   }
 
-  // Benefits Realization
   if (sectionKey === "benefits_realization") {
     const items = content.benefits || [];
     return (
@@ -495,171 +352,156 @@ function SectionBody({
         rows={items.map((b: any, i: number) => ({
           key: i,
           cells: [
-            <span key="id" className="font-mono text-[12px] text-emerald-400/80">
+            <Mono key="id" className="text-accent">
               {getDisplayId(sectionKey, b, i)}
-            </span>,
-            <span key="ben" className="text-emerald-400/80 text-[13px]">
+            </Mono>,
+            <span key="ben" className="text-accent text-body">
               {b.benefit}
             </span>,
-            <span key="meas" className="text-justify">{b.measurement}</span>,
-            <span key="time" className="font-mono text-[12px] text-secondary">
+            <span key="meas">{b.measurement}</span>,
+            <Mono key="time" className="text-secondary">
               {b.timeline}
-            </span>,
+            </Mono>,
           ],
         }))}
       />
     );
   }
 
-  // Assumptions & Constraints — bullet lists
   if (sectionKey === "assumptions" || sectionKey === "constraints") {
     const items = content.assumptions || content.constraints || [];
     return (
       <ul className="flex flex-col gap-3">
         {items.map((item: string, i: number) => (
-          <li key={i} className="flex gap-3 text-[14.5px] text-body leading-relaxed">
-            <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="text-justify">{item}</span>
+          <li key={i} className="flex gap-3 text-body leading-relaxed">
+            <span className="mt-2 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+            <span>{item}</span>
           </li>
         ))}
       </ul>
     );
   }
 
-  // Default prose (executive_summary, business_objective)
   const body = content.narrative || [];
   const paragraphs = Array.isArray(body) ? body : [body];
   return (
     <div className="flex flex-col gap-4">
       {paragraphs.map((para: string, i: number) => (
-        <p
-          key={i}
-          className="text-[14.5px] text-body leading-[1.7] text-justify"
-        >
+        <Body key={i} className="leading-relaxed">
           {para}
-        </p>
+        </Body>
       ))}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Regenerate Menu
+// Regenerate controls
 // ─────────────────────────────────────────────────────────────────────────────
-function RegenerateMenu({
+function RegenerateControls({
   onRegenerate,
-  onEditPrompt,
+  loading,
 }: {
-  onRegenerate: () => void;
-  onEditPrompt: (prompt: string) => void;
+  onRegenerate: (prompt?: string) => void;
+  loading: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <button
-        onClick={() => setOpen(!open)}
-        className="text-[11px] text-tertiary hover:text-ink transition-colors font-mono tracking-tight inline-flex items-center gap-1.5"
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={loading}
+        className="inline-flex items-center gap-1.5 text-caption font-mono tracking-tight text-tertiary hover:text-ink transition-colors disabled:opacity-40"
       >
-        <IconSparkle size={11} />
-        regenerate
-        <IconChevronDown size={10} />
+        <IconSparkle size={12} />
+        {loading ? "Regenerating…" : "Regenerate"}
+        <IconChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="absolute right-0 top-full mt-2 z-50 w-56"
+      {open && (
+        <div className="absolute right-0 top-full mt-2 z-30 w-56 surface-card bg-surface-2 p-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onRegenerate();
+            }}
+            className="w-full text-left px-3 py-2 rounded-lg text-body hover:bg-surface transition-colors flex items-center gap-2"
           >
-            <DoubleBezel padding="p-2" outerTone="subtle" className="!ring-white/10">
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    onRegenerate();
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-[13px] text-body hover:bg-white/[0.04] hover:text-ink transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <IconSparkle size={13} />
-                    Regenerate from brief
-                  </span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPrompt(true);
-                    setOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-[13px] text-body hover:bg-white/[0.04] hover:text-ink transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <IconArrow size={13} />
-                    Edit with prompt…
-                  </span>
-                </button>
-              </div>
-            </DoubleBezel>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <IconSparkle size={14} />
+            Regenerate from brief
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setPromptOpen(true);
+            }}
+            className="w-full text-left px-3 py-2 rounded-lg text-body hover:bg-surface transition-colors flex items-center gap-2"
+          >
+            <IconArrow size={14} />
+            Edit with prompt…
+          </button>
+        </div>
+      )}
 
-      <AnimatePresence>
-        {showPrompt && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowPrompt(false)}
+      {promptOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          onClick={() => setPromptOpen(false)}
+        >
+          <Card
+            padding="md"
+            className="w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DoubleBezel padding="p-6">
-                <h3 className="text-[15px] font-medium text-ink mb-4 tracking-tight">
-                  Edit Section
-                </h3>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe what you want changed…"
-                  rows={4}
-                  className="field w-full bg-surface-2 border border-white/10 rounded-xl px-4 py-3 text-[14px] text-ink                   placeholder:text-tertiary leading-relaxed mb-4"
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <PillCTA
-                    fullWidth
-                    onClick={() => {
-                      onEditPrompt(prompt);
-                      setShowPrompt(false);
-                      setPrompt("");
-                    }}
-                    trailingIcon={<IconArrow size={13} />}
-                  >
-                    Apply
-                  </PillCTA>
-                  <button
-                    onClick={() => setShowPrompt(false)}
-                    className="px-4 py-2 rounded-full text-[13px] text-tertiary hover:text-ink transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </DoubleBezel>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Heading2 className="mb-4">Edit Section</Heading2>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe what you want changed…"
+              rows={4}
+              className="w-full bg-surface-2 border border-white/10 rounded-xl px-4 py-3 text-body text-ink placeholder:text-tertiary leading-relaxed mb-4 focus:outline-none focus:border-accent-dim focus:ring-[3px] focus:ring-accent/15"
+              autoFocus
+            />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                fullWidth
+                onClick={() => {
+                  onRegenerate(prompt);
+                  setPromptOpen(false);
+                  setPrompt("");
+                }}
+              >
+                Apply
+              </Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setPromptOpen(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
@@ -673,27 +515,31 @@ function CriticCard({
   brief,
   content,
 }: {
-  sectionKey: string;
-  issues: Array<{ severity: string; issue: string; suggestion: string; accepted?: boolean; rejected?: boolean }>;
+  sectionKey: SectionKey;
+  issues: Array<{
+    severity: "low" | "medium" | "high";
+    issue: string;
+    suggestion: string;
+    accepted?: boolean;
+    rejected?: boolean;
+  }>;
   brief: any;
   content: Record<string, any>;
 }) {
   const { acceptFeedback, rejectFeedback, updateSection } = useAppStore();
   const [applying, setApplying] = useState<string | null>(null);
+  const [showLow, setShowLow] = useState(false);
 
   const activeIssues = issues.filter((x) => !x.accepted && !x.rejected);
   const highMed = activeIssues.filter((x) => x.severity !== "low");
   const low = activeIssues.filter((x) => x.severity === "low");
-  const [showLow, setShowLow] = useState(false);
 
-  const handleAccept = async (issue: any) => {
-    const index = issues.findIndex((f) => f === issue);
-    if (index === -1) return;
+  const handleAccept = async (issue: any, index: number) => {
     setApplying(`accept-${index}`);
     try {
-      const res = await fetch(`${API_BASE}/api/apply-critique`, {
+      const res = await fetch(apiUrl("/api/apply-critique"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({
           section_name: sectionKey,
           brief,
@@ -702,13 +548,11 @@ function CriticCard({
           critique_suggestion: issue.suggestion,
         }),
       });
-
       if (!res.ok) throw new Error("Failed to apply critique");
-
       const data = await res.json();
       const updatedFeedback = issues.map((f, i) =>
         i === index ? { ...f, accepted: true } : f
-      ) as Array<{ severity: "low" | "medium" | "high"; issue: string; suggestion: string; accepted?: boolean; rejected?: boolean }>;
+      );
       updateSection(sectionKey, {
         content: data.content,
         feedback: updatedFeedback,
@@ -721,240 +565,178 @@ function CriticCard({
     }
   };
 
-  const handleReject = (issue: any) => {
-    const index = issues.findIndex((f) => f === issue);
-    if (index === -1) return;
+  const handleReject = (index: number) => {
     rejectFeedback(sectionKey, index);
   };
 
   if (!issues.length || (!highMed.length && !low.length)) {
     return (
-      <DoubleBezel padding="p-7" outerTone="subtle">
+      <Card padding="md" tone="elevated">
         <div className="flex items-center gap-3">
-          <span className="w-9 h-9 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <IconCheck size={15} />
+          <span className="w-10 h-10 rounded-full bg-accent/10 ring-1 ring-accent/20 flex items-center justify-center text-accent">
+            <IconCheck size={18} />
           </span>
           <div className="flex flex-col">
-            <span className="text-[13px] text-ink font-medium tracking-tight">
-              Critic review clean
-            </span>
-            <span className="text-[12px] text-tertiary">
-              No active issues in this section.
-            </span>
+            <Body className="text-ink font-medium">Critic review clean</Body>
+            <BodySmall className="text-tertiary">No active issues in this section.</BodySmall>
           </div>
         </div>
-      </DoubleBezel>
+      </Card>
     );
   }
 
   return (
-    <DoubleBezel padding="p-7" outerTone="subtle">
+    <Card padding="md" tone="elevated">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-full bg-white/[0.05] ring-1 ring-white/10 flex items-center justify-center text-emerald-400/90">
-            <IconShield size={13} />
+          <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-white/10 flex items-center justify-center text-accent">
+            <IconShield size={14} />
           </span>
-          <span className="text-[13px] font-medium tracking-tight text-ink">
-            Critic Review
-          </span>
-          <span className="text-[11px] font-mono text-tertiary ml-1">
-            agent-02
-          </span>
+          <Body className="font-medium text-ink">Critic Review</Body>
+          <Caption className="text-tertiary font-mono">agent-02</Caption>
         </div>
-        <span className="text-[10px] uppercase tracking-[0.18em] font-mono text-tertiary">
+        <Caption className="uppercase tracking-[0.14em] text-tertiary font-mono">
           {activeIssues.length} {activeIssues.length === 1 ? "note" : "notes"}
-        </span>
+        </Caption>
       </div>
 
       <ul className="flex flex-col">
-        {highMed.map((it, idx) => {
-          const originalIndex = issues.findIndex((f) => f === it);
-          const key = `${it.severity}-${originalIndex}`;
-          const isApplying = applying === `accept-${originalIndex}`;
-          return (
-            <li
-              key={key}
-              className={`flex gap-4 py-4 ${idx !== 0 ? "border-t hairline" : ""}`}
-            >
-              <div className="shrink-0 self-start pt-0.5">
-                <SeverityBadge level={it.severity as any} />
-              </div>
-              <div className="flex-1 flex flex-col gap-2.5">
-                <p className="text-[13.5px] leading-relaxed text-body text-justify">
-                  {it.issue}
-                </p>
-                {it.suggestion && (
-                  <p className="text-[12px] text-tertiary text-justify">{it.suggestion}</p>
-                )}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleAccept(it)}
-                    disabled={isApplying}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] tracking-tight transition-colors bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20"
-                  >
-                    {isApplying ? (
-                      <span className="block w-3 h-3 rounded-full border border-emerald-400/40 border-t-emerald-400 animate-spin" />
-                    ) : (
-                      <IconCheck size={11} />
-                    )}
-                    {isApplying ? "Applying…" : "Accept changes"}
-                  </button>
-                  <button
-                    onClick={() => handleReject(it)}
-                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] tracking-tight transition-colors bg-white/[0.04] text-secondary ring-1 ring-white/10 hover:text-ink hover:bg-white/[0.08]"
-                  >
-                    <IconX size={11} />
-                    Reject
-                  </button>
-                </div>
-              </div>
-            </li>
-          );
-        })}
+        {highMed.map((it, idx) => (
+          <CriticIssueRow
+            key={idx}
+            issue={it}
+            index={issues.findIndex((f) => f === it)}
+            applying={applying}
+            onAccept={handleAccept}
+            onReject={handleReject}
+            first={idx === 0}
+          />
+        ))}
 
         {low.length > 0 && !showLow && (
-          <li className="border-t hairline pt-4 mt-1">
+          <li className="border-t border-white/[0.06] pt-4 mt-1">
             <button
+              type="button"
               onClick={() => setShowLow(true)}
-              className="text-[12px] text-tertiary hover:text-body inline-flex items-center gap-1.5 transition-colors font-mono tracking-tight"
+              className="text-body-sm text-tertiary hover:text-body inline-flex items-center gap-1.5 transition-colors font-mono tracking-tight"
             >
-              <IconChevronDown size={11} />
-              Show {low.length} low-severity{" "}
-              {low.length === 1 ? "note" : "notes"}
+              <IconChevronDown size={12} />
+              Show {low.length} low-severity {low.length === 1 ? "note" : "notes"}
             </button>
           </li>
         )}
 
-        {low.length > 0 &&
-          showLow &&
-          low.map((it) => {
-            const originalIndex = issues.findIndex((f) => f === it);
-            const key = `low-${originalIndex}`;
-            const isApplying = applying === `accept-${originalIndex}`;
-            return (
-              <li key={key} className="flex gap-4 py-4 border-t hairline">
-                <div className="shrink-0 self-start pt-0.5">
-                  <SeverityBadge level="low" />
-                </div>
-                <div className="flex-1 flex flex-col gap-2.5">
-                  <p className="text-[13.5px] leading-relaxed text-secondary text-justify">
-                    {it.issue}
-                  </p>
-                  {it.suggestion && (
-                    <p className="text-[12px] text-tertiary text-justify">{it.suggestion}</p>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleAccept(it)}
-                      disabled={isApplying}
-                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] tracking-tight transition-colors bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20"
-                    >
-                      {isApplying ? (
-                        <span className="block w-3 h-3 rounded-full border border-emerald-400/40 border-t-emerald-400 animate-spin" />
-                      ) : (
-                        <IconCheck size={11} />
-                      )}
-                      {isApplying ? "Applying…" : "Accept changes"}
-                    </button>
-                    <button
-                      onClick={() => handleReject(it)}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] tracking-tight transition-colors bg-white/[0.04] text-secondary ring-1 ring-white/10 hover:text-ink hover:bg-white/[0.08]"
-                    >
-                      <IconX size={11} />
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+        {showLow &&
+          low.map((it) => (
+            <CriticIssueRow
+              key={`low-${issues.findIndex((f) => f === it)}`}
+              issue={it}
+              index={issues.findIndex((f) => f === it)}
+              applying={applying}
+              onAccept={handleAccept}
+              onReject={handleReject}
+              first={false}
+            />
+          ))}
       </ul>
-    </DoubleBezel>
+    </Card>
+  );
+}
+
+function CriticIssueRow({
+  issue,
+  index,
+  applying,
+  onAccept,
+  onReject,
+  first,
+}: {
+  issue: { severity: "low" | "medium" | "high"; issue: string; suggestion: string };
+  index: number;
+  applying: string | null;
+  onAccept: (issue: any, index: number) => void;
+  onReject: (index: number) => void;
+  first: boolean;
+}) {
+  const isApplying = applying === `accept-${index}`;
+  return (
+    <li className={`flex gap-4 py-4 ${!first ? "border-t border-white/[0.06]" : ""}`}>
+      <div className="shrink-0 self-start pt-0.5">
+        <Badge severity={issue.severity} />
+      </div>
+      <div className="flex-1 flex flex-col gap-2.5">
+        <Body className="leading-relaxed">{issue.issue}</Body>
+        {issue.suggestion && (
+          <BodySmall className="text-tertiary">{issue.suggestion}</BodySmall>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onAccept(issue, index)}
+            disabled={isApplying}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption tracking-tight transition-colors bg-accent/10 text-accent ring-1 ring-accent/20 hover:bg-accent/20 disabled:opacity-40"
+          >
+            {isApplying ? (
+              <span className="block w-3 h-3 rounded-full border border-accent/40 border-t-accent animate-spin" />
+            ) : (
+              <IconCheck size={11} />
+            )}
+            {isApplying ? "Applying…" : "Accept changes"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onReject(index)}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption tracking-tight transition-colors bg-surface-2 text-secondary ring-1 ring-white/10 hover:text-ink hover:bg-white/[0.08]"
+          >
+            <IconX size={11} />
+            Reject
+          </button>
+        </div>
+      </div>
+    </li>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Export
+// Export action
 // ─────────────────────────────────────────────────────────────────────────────
 function useExportBRD(projectName?: string) {
   const { brd } = useAppStore();
+  const [exporting, setExporting] = useState(false);
 
-  return async () => {
+  const exportBRD = useCallback(async () => {
     if (!brd) return;
-    const res = await fetch(`${API_BASE}/api/export`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brd }),
-    });
-    if (!res.ok) throw new Error("Export failed");
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const filename = projectName
-      ? `${sanitizeFilename(projectName)}_BRD.docx`
-      : "BRD.docx";
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+    setExporting(true);
+    try {
+      const res = await fetch(apiUrl("/api/export"), {
+        method: "POST",
+        headers: apiHeaders(),
+        body: JSON.stringify({ brd }),
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const filename = projectName
+        ? `${sanitizeFilename(projectName)}_BRD.docx`
+        : "BRD.docx";
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to export BRD. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  }, [brd, projectName]);
+
+  return { exportBRD, exporting };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Section Navigator (prev / next)
-// ─────────────────────────────────────────────────────────────────────────────
-function SectionNav({
-  activeKey,
-  onSelect,
-}: {
-  activeKey: string;
-  onSelect: (key: string) => void;
-}) {
-  const router = useRouter();
-  const currentIndex = SECTIONS.findIndex((s) => s.key === activeKey);
-  const prev = SECTIONS[currentIndex - 1];
-  const next = SECTIONS[currentIndex + 1];
-  const isLast = currentIndex === SECTIONS.length - 1;
-
-  return (
-    <div className="flex items-center justify-between">
-      {prev ? (
-        <button
-          onClick={() => onSelect(prev.key)}
-          className="inline-flex items-center gap-2 text-[13px] text-secondary hover:text-ink transition-colors"
-        >
-          <IconArrowLeft size={14} />
-          <span>{prev.title}</span>
-        </button>
-      ) : (
-        <span />
-      )}
-
-      {next ? (
-        <button
-          onClick={() => onSelect(next.key)}
-          className="inline-flex items-center gap-2 text-[13px] text-secondary hover:text-ink transition-colors"
-        >
-          <span>{next.title}</span>
-          <IconArrowRight size={14} />
-        </button>
-      ) : isLast ? (
-        <button
-          onClick={() => router.push("/export")}
-          className="inline-flex items-center gap-2 text-[13px] text-emerald-400 hover:text-emerald-300 transition-colors"
-        >
-          <span>Export</span>
-          <IconArrowRight size={14} />
-        </button>
-      ) : (
-        <span />
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Review Screen
+// Main review page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ReviewPage() {
   const router = useRouter();
@@ -967,10 +749,12 @@ export default function ReviewPage() {
     hasCritique,
     setHasCritique,
   } = useAppStore();
-  const [activeKey, setActiveKey] = useState("executive_summary");
+  const [activeKey, setActiveKey] = useState<SectionKey>("executive_summary");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
-  const [regenerationKey, setRegenerationKey] = useState(0);
   const [runningCritique, setRunningCritique] = useState(false);
+
+  const { exportBRD, exporting } = useExportBRD(brief?.project_objective);
 
   useEffect(() => {
     if (!brd) {
@@ -978,35 +762,26 @@ export default function ReviewPage() {
     }
   }, [brd, router]);
 
-  // Mark section as visited when active changes
   useEffect(() => {
-    if (activeKey) {
-      visitSection(activeKey);
-    }
+    if (activeKey) visitSection(activeKey);
   }, [activeKey, visitSection]);
 
-  if (!brd) return null;
-
-  const section = SECTIONS.find((s) => s.key === activeKey);
-  const content = (brd as Record<string, SectionOutput | undefined>)[activeKey];
-  const issues = content?.feedback || [];
-
-  const activeIssues = issues.filter((f) => !f.accepted && !f.rejected);
-  const issueCounts = activeIssues.reduce(
-    (acc: Record<string, number>, it) => {
-      acc[it.severity] = (acc[it.severity] || 0) + 1;
-      return acc;
+  const handleSelect = useCallback(
+    (key: SectionKey) => {
+      if (key === activeKey) return;
+      setActiveKey(key);
+      setSidebarOpen(false);
     },
-    {} as Record<string, number>
+    [activeKey]
   );
 
   const handleRegenerate = async (prompt?: string) => {
     if (!brief) return;
     setRegenerating(true);
     try {
-      const res = await fetch(`${API_BASE}/api/regenerate-section`, {
+      const res = await fetch(apiUrl("/api/regenerate-section"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({
           section_name: activeKey,
           brief,
@@ -1016,7 +791,6 @@ export default function ReviewPage() {
       if (!res.ok) throw new Error("Regeneration failed");
       const data = await res.json();
       updateSection(activeKey, data);
-      setRegenerationKey((k) => k + 1);
     } catch (err) {
       console.error(err);
       alert("Failed to regenerate section.");
@@ -1029,13 +803,10 @@ export default function ReviewPage() {
     if (!brd || !brief) return;
     setRunningCritique(true);
     try {
-      const res = await fetch(`${API_BASE}/api/critique`, {
+      const res = await fetch(apiUrl("/api/critique"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brd,
-          brief,
-        }),
+        headers: apiHeaders(),
+        body: JSON.stringify({ brd, brief }),
       });
       if (!res.ok) throw new Error("Critique failed");
       const data = await res.json();
@@ -1053,164 +824,331 @@ export default function ReviewPage() {
     }
   };
 
+  if (!brd) return null;
+
+  const section = SECTIONS.find((s) => s.key === activeKey)!;
+  const content = (brd as Record<SectionKey, SectionOutput | undefined>)[activeKey];
+  const issues = content?.feedback || [];
+  const activeIssues = issues.filter((f) => !f.accepted && !f.rejected);
+  const issueCounts = activeIssues.reduce(
+    (acc: Record<string, number>, it) => {
+      acc[it.severity] = (acc[it.severity] || 0) + 1;
+      return acc;
+    },
+    {}
+  );
+
+  const currentIndex = SECTIONS.findIndex((s) => s.key === activeKey);
+  const prev = SECTIONS[currentIndex - 1];
+  const next = SECTIONS[currentIndex + 1];
+
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "Intake", href: "/intake" },
+    { label: "Review", href: "/review" },
+    { label: "Export", href: "/export" },
+  ];
+
+  const navActions = (
+    <Button
+      size="sm"
+      variant="primary"
+      onClick={exportBRD}
+      loading={exporting}
+      trailingIcon={<IconDownload size={14} />}
+    >
+      Export
+    </Button>
+  );
+
   return (
-    <div className="h-[100dvh] flex flex-col overflow-hidden">
-      {/* Top nav — stationary */}
-      <header className="shrink-0 z-50">
-        <GlassNav active="Review" canReview={true} />
-      </header>
+    <div className="min-h-[100dvh] flex flex-col bg-ground">
+      <Nav items={navItems} actions={navActions} />
 
-      {/* Main area — sidebar + content */}
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar
-          project={brief?.project_objective || "Project"}
-          activeKey={activeKey}
-          onSelect={setActiveKey}
-          brd={brd as Record<string, SectionOutput | undefined>}
-          visitedSections={visitedSections}
-        />
-
-        {/* Workspace — scrollable */}
-        <div className="flex-1 overflow-y-auto py-4 pr-4 pl-0">
-          <div
-            className="relative bg-surface ring-1 ring-white/[0.04] rounded-card overflow-hidden"
-            style={{ margin: "16px 16px 16px 0", minHeight: "calc(100% - 32px)" }}
+      <main className="flex-1 flex flex-col md:flex-row pt-20 md:pt-24 pb-6 md:pb-8 px-4 md:px-6 gap-4 md:gap-6 max-w-[1400px] mx-auto w-full">
+        {/* Mobile section selector */}
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="w-full flex items-center justify-between surface-card px-4 py-3 text-left"
           >
-            <div
-              className="absolute inset-0 rounded-card pointer-events-none"
-              style={{
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-              }}
-            />
+            <span className="flex items-center gap-3">
+              <Mono className="text-tertiary">{section.n}</Mono>
+              <Body className="text-ink font-medium">{section.title}</Body>
+            </span>
+            <IconChevronDown size={16} className="text-secondary" />
+          </button>
+        </div>
 
-            <div className="relative p-10 pb-32 flex flex-col gap-7">
+        {/* Sidebar */}
+        <aside
+          className={[
+            "fixed inset-y-0 left-0 z-40 w-[280px] bg-ground/95 backdrop-blur-xl border-r border-white/[0.06] transform transition-transform duration-300 md:translate-x-0 md:static md:w-[260px] md:bg-surface md:backdrop-blur-none md:border md:rounded-2xl md:flex-shrink-0 md:h-[calc(100dvh-7rem)] md:sticky md:top-24",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          ].join(" ")}
+          role="navigation"
+          aria-label="BRD sections"
+        >
+          <div className="flex flex-col h-full p-4 md:p-5">
+            <div className="flex items-center justify-between mb-6 md:hidden">
+              <Caption className="uppercase tracking-[0.14em] text-tertiary font-mono">
+                BRD Sections
+              </Caption>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/[0.08]"
+                aria-label="Close section menu"
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1 flex-1 overflow-y-auto -mx-1 px-1">
+              <Caption className="uppercase tracking-[0.14em] text-tertiary font-mono px-2 mb-1 hidden md:block">
+                BRD Sections
+              </Caption>
+              {SECTIONS.map((s) => {
+                const isActive = s.key === activeKey;
+                const sec = brd[s.key];
+                const hasFeedback = sec?.feedback?.some(
+                  (f) => !f.accepted && !f.rejected
+                );
+                const hasUnvisited = sec?.feedback?.some(
+                  (f) => !f.accepted && !f.rejected && !visitedSections.has(s.key)
+                );
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => handleSelect(s.key)}
+                    className={[
+                      "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors",
+                      isActive
+                        ? "bg-accent/10 text-ink"
+                        : "hover:bg-white/[0.04] text-secondary hover:text-ink",
+                    ].join(" ")}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-accent" />
+                    )}
+                    <Mono
+                      className={[
+                        "text-caption w-5",
+                        isActive ? "text-accent" : "text-tertiary",
+                      ].join(" ")}
+                    >
+                      {s.n}
+                    </Mono>
+                    <BodySmall
+                      className={[
+                        "flex-1 tracking-tight",
+                        isActive ? "text-ink font-medium" : "",
+                      ].join(" ")}
+                    >
+                      {s.title}
+                    </BodySmall>
+                    {hasFeedback && (
+                      <span
+                        className={[
+                          "w-1.5 h-1.5 rounded-full shrink-0",
+                          hasUnvisited ? "bg-[var(--badge-medium-text)]" : "bg-tertiary",
+                        ].join(" ")}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-baseline justify-between">
+                  <Caption className="uppercase tracking-[0.14em] text-tertiary font-mono">
+                    Progress
+                  </Caption>
+                  <Caption className="text-tertiary font-mono">
+                    {visitedSections.size} / {SECTIONS.length}
+                  </Caption>
+                </div>
+                <div className="h-1 rounded-full bg-surface-2 overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-all duration-500"
+                    style={{
+                      width: `${(visitedSections.size / SECTIONS.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth
+                onClick={() => router.push("/export")}
+                trailingIcon={<IconArrow size={14} />}
+              >
+                Export
+              </Button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          <Card
+            padding="md"
+            className="min-h-[calc(100dvh-6rem)] md:min-h-[calc(100dvh-7rem)]"
+          >
+            <div className="flex flex-col gap-6 md:gap-8">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-[11px] font-mono text-tertiary tracking-tight">
+              <div className="flex items-center gap-2 text-caption font-mono text-tertiary tracking-tight">
                 <span>BRD</span>
-                <IconChevron size={10} />
-                <span className="truncate max-w-[40ch]">
+                <IconChevronDown size={10} className="-rotate-90" />
+                <span className="truncate max-w-[30ch]">
                   {brief?.project_objective || "Project"}
                 </span>
-                <IconChevron size={10} />
+                <IconChevronDown size={10} className="-rotate-90" />
                 <span className="text-body shrink-0">
-                  § {section?.n} {section?.title}
+                  § {section.n} {section.title}
                 </span>
               </div>
 
               {/* Header */}
-              <div className="flex items-end justify-between gap-6">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <h1 className="text-3xl tracking-tight text-ink font-medium leading-none">
-                    {section?.title}
-                  </h1>
-                  {activeIssues.length > 0 ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {(["high", "medium", "low"] as const)
-                        .filter((k) => issueCounts[k])
-                        .map((severity) => (
-                          <SeverityBadge
-                            key={severity}
-                            level={severity}
-                            className="normal-case w-auto"
-                          >
-                            {severity.charAt(0).toUpperCase() + severity.slice(1)}
-                          </SeverityBadge>
-                        ))}
-                      <span className="text-sm text-secondary">
-                        {activeIssues.length} {activeIssues.length === 1 ? "issue" : "issues"} found
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-secondary">No issues</span>
-                  )}
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+                  <Heading1>{section.title}</Heading1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(["high", "medium", "low"] as const)
+                      .filter((k) => issueCounts[k])
+                      .map((severity) => (
+                        <Badge key={severity} severity={severity}>
+                          {severity}
+                        </Badge>
+                      ))}
+                    {activeIssues.length === 0 && (
+                      <BodySmall className="text-secondary">No issues</BodySmall>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-mono text-tertiary shrink-0">
+                <div className="flex items-center gap-2 text-caption font-mono text-tertiary shrink-0">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-emerald-500 animate-soft-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                     drafter complete
                   </span>
-                  <span className="mx-2 text-tertiary">·</span>
-                  <span>updated 2m ago</span>
+                  <span>·</span>
+                  <span>{countWords(brd)} words</span>
                 </div>
               </div>
 
-              {/* Section navigation — top */}
-              <SectionNav activeKey={activeKey} onSelect={setActiveKey} />
-
-              {/* Drafted content card */}
-              <DoubleBezel padding="p-10">
-                <div className="flex items-center justify-between mb-7">
+              {/* Drafted content */}
+              <Card padding="md" tone="elevated">
+                <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded-full bg-white/[0.05] ring-1 ring-white/10 flex items-center justify-center text-secondary">
-                      <IconDoc size={13} />
+                    <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-white/10 flex items-center justify-center text-secondary">
+                      <IconDoc size={14} />
                     </span>
-                    <span className="text-[13px] font-medium tracking-tight text-ink">
-                      Drafted Content
-                    </span>
-                    <span className="text-[11px] font-mono text-tertiary ml-1">
-                      agent-01
-                    </span>
+                    <Body className="font-medium text-ink">Drafted Content</Body>
+                    <Caption className="text-tertiary font-mono">agent-01</Caption>
                   </div>
-                  {regenerating ? (
-                    <span className="text-[11px] text-tertiary font-mono inline-flex items-center gap-1.5">
-                      <span className="block w-3 h-3 rounded-full border border-white/40 border-t-white animate-spin" />
-                      regenerating…
-                    </span>
-                  ) : (
-                    <RegenerateMenu
-                      onRegenerate={() => handleRegenerate()}
-                      onEditPrompt={(prompt) => handleRegenerate(prompt)}
-                    />
-                  )}
+                  <RegenerateControls onRegenerate={handleRegenerate} loading={regenerating} />
                 </div>
+                <SectionBody sectionKey={activeKey} content={content?.content || {}} />
+              </Card>
 
-                <SectionBody
-                  sectionKey={activeKey}
-                  content={content?.content || {}}
-                />
-              </DoubleBezel>
-
-              {/* Critic feedback card or run-critique prompt */}
-              {!hasCritique ? (
-                <DoubleBezel padding="p-10" outerTone="subtle">
-                  <div className="flex flex-col items-center text-center gap-5">
-                    <span className="w-12 h-12 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      <IconShield size={20} />
-                    </span>
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[15px] font-medium tracking-tight text-ink">
-                        Critic Review Not Run
-                      </span>
-                      <span className="text-[13px] text-secondary max-w-[45ch] leading-relaxed">
-                        Run the critic agent to analyze each section and receive recommendations for improvement.
-                      </span>
-                    </div>
-                    <PillCTA
-                      onClick={handleRunCritique}
-                      loading={runningCritique}
-                      trailingIcon={runningCritique ? null : <IconArrow size={14} />}
-                    >
-                      {runningCritique ? "Analyzing…" : "Run Critic Review"}
-                    </PillCTA>
-                  </div>
-                </DoubleBezel>
-              ) : (
+              {/* Critic section */}
+              {issues.length > 0 ? (
                 <CriticCard
-                  key={regenerationKey}
                   sectionKey={activeKey}
                   issues={issues}
                   brief={brief}
                   content={content?.content || {}}
                 />
+              ) : !hasCritique ? (
+                <Card padding="md" tone="elevated">
+                  <div className="flex flex-col items-center text-center gap-5">
+                    <span className="w-12 h-12 rounded-full bg-accent/10 ring-1 ring-accent/20 flex items-center justify-center text-accent">
+                      <IconShield size={20} />
+                    </span>
+                    <div className="flex flex-col gap-1.5">
+                      <Heading2 className="text-h3">Critic Review Not Run</Heading2>
+                      <BodySmall className="text-secondary max-w-[45ch] leading-relaxed">
+                        Run the critic agent to analyze each section and receive
+                        recommendations for improvement.
+                      </BodySmall>
+                    </div>
+                    <Button
+                      onClick={handleRunCritique}
+                      loading={runningCritique}
+                      trailingIcon={runningCritique ? undefined : <IconArrow size={14} />}
+                    >
+                      {runningCritique ? "Analyzing…" : "Run Critic Review"}
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                <Card padding="md" tone="elevated">
+                  <div className="flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-full bg-accent/10 ring-1 ring-accent/20 flex items-center justify-center text-accent">
+                      <IconCheck size={18} />
+                    </span>
+                    <div className="flex flex-col">
+                      <Body className="text-ink font-medium">Critic review clean</Body>
+                      <BodySmall className="text-tertiary">No active issues in this section.</BodySmall>
+                    </div>
+                  </div>
+                </Card>
               )}
 
-              {/* Section navigation — bottom */}
-              <SectionNav activeKey={activeKey} onSelect={setActiveKey} />
-            </div>
-          </div>
-        </div>
-      </div>
+              {/* Footer nav */}
+              <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+                {prev ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(prev.key)}
+                    className="inline-flex items-center gap-2 text-body-sm text-secondary hover:text-ink transition-colors"
+                  >
+                    <IconArrowLeft size={14} />
+                    <span className="hidden sm:inline">{prev.title}</span>
+                  </button>
+                ) : (
+                  <span />
+                )}
 
+                {next ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(next.key)}
+                    className="inline-flex items-center gap-2 text-body-sm text-secondary hover:text-ink transition-colors"
+                  >
+                    <span className="hidden sm:inline">{next.title}</span>
+                    <IconArrowRight size={14} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => router.push("/export")}
+                    className="inline-flex items-center gap-2 text-body-sm text-accent hover:text-accent-hover transition-colors"
+                  >
+                    <span>Export</span>
+                    <IconArrowRight size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 }

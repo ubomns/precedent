@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
+import { GsapProvider } from "@/components/motion/gsap-provider";
+import { TransitionLayout } from "@/components/motion/transition-layout";
 
 export const metadata: Metadata = {
   title: "Precedent — BRD Generator",
@@ -25,26 +28,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  const theme = localStorage.getItem("theme");
-                  if (theme === "light") {
-                    document.documentElement.classList.remove("dark");
-                    document.documentElement.classList.add("light");
-                  } else {
-                    document.documentElement.classList.add("dark");
-                    document.documentElement.classList.remove("light");
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
       </head>
-      <body className="min-h-[100dvh] bg-ground text-ink">{children}</body>
+      <body className="min-h-[100dvh] bg-ground text-ink">
+        <Script src="/theme.js" strategy="beforeInteractive" />
+        <GsapProvider>
+          <TransitionLayout>{children}</TransitionLayout>
+        </GsapProvider>
+      </body>
     </html>
   );
 }

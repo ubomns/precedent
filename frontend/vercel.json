@@ -1,4 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/handler" }
+  ],
+  "functions": {
+    "api/handler.py": {
+      "runtime": "@vercel/python@6.44.0",
+      "maxDuration": 300
+    }
+  }
 }

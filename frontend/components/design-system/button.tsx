@@ -58,7 +58,7 @@ function buttonClasses(
   isDisabled: boolean
 ) {
   return [
-    "cta group relative inline-flex items-center justify-center font-medium tracking-tight rounded-full select-none",
+    "cta group relative inline-flex items-center justify-center font-medium tracking-tight rounded-lg select-none",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-ground",
     isDisabled ? "opacity-40 cursor-not-allowed" : "",
     variantStyles[variant],
@@ -86,7 +86,7 @@ function ButtonContent({
       <span className="pl-0.5">{children}</span>
       <span
         className={[
-          "cta-icon flex items-center justify-center rounded-full shrink-0",
+          "cta-icon flex items-center justify-center rounded-md shrink-0",
           wellBg,
           iconWellSize[size],
         ].join(" ")}
