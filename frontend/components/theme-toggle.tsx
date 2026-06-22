@@ -31,7 +31,8 @@ export function ThemeToggle() {
     return (
       <button
         aria-label="Toggle theme"
-        className="w-8 h-8 rounded-full bg-white/[0.05] ring-1 ring-white/10 flex items-center justify-center text-secondary"
+        className="w-10 h-10 rounded-full ring-1 flex items-center justify-center"
+        style={{ background: "var(--bezel-bg)", borderColor: "var(--bezel-ring)", color: "var(--muted)" }}
       >
         <span className="w-4 h-4" />
       </button>
@@ -42,7 +43,7 @@ export function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors ring-1"
+      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors ring-1"
       style={{
         background: "var(--bezel-bg)",
         color: "var(--muted)",

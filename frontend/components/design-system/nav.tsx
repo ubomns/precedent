@@ -4,6 +4,7 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoIcon, IconX } from "@/components/icons";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface NavItem {
   label: string;
@@ -47,7 +48,7 @@ export function Nav({ items, actions, brand }: NavProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.06] bg-ground/90 backdrop-blur-xl">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-ground/90 backdrop-blur-xl">
         <nav
           className={[
             "flex items-center justify-between gap-4 px-4 md:px-6 py-3 md:py-4",
@@ -70,42 +71,46 @@ export function Nav({ items, actions, brand }: NavProps) {
           </Link>
 
           <div className="flex items-center gap-1 md:gap-2">
-            {items.map((item) => {
-              const active = isActive(item.href) && !item.disabled;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.disabled ? "#" : item.href}
-                  onClick={(e) => item.disabled && e.preventDefault()}
-                  aria-disabled={item.disabled}
-                  className={[
-                    "relative px-3 py-2 text-sm tracking-tight transition-colors rounded-md",
-                    active
-                      ? "text-ink font-medium"
-                      : "text-secondary hover:text-ink hover:bg-white/[0.04]",
-                    item.disabled
-                      ? "opacity-40 cursor-not-allowed hover:text-secondary hover:bg-transparent"
-                      : "",
-                  ].join(" ")}
-                >
-                  {item.label}
-                  {active && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-accent rounded-full" />
-                  )}
-                </Link>
-              );
-            })}
+            <div className="hidden md:flex items-center gap-1 md:gap-2">
+              {items.map((item) => {
+                const active = isActive(item.href) && !item.disabled;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.disabled ? "#" : item.href}
+                    onClick={(e) => item.disabled && e.preventDefault()}
+                    aria-disabled={item.disabled}
+                    className={[
+                      "relative px-3 py-2 text-sm tracking-tight transition-colors rounded-md",
+                      active
+                        ? "text-ink font-medium"
+                        : "text-secondary hover:text-ink hover:bg-overlay",
+                      item.disabled
+                        ? "opacity-40 cursor-not-allowed hover:text-secondary hover:bg-transparent"
+                        : "",
+                    ].join(" ")}
+                  >
+                    {item.label}
+                    {active && (
+                      <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-accent rounded-full" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
 
             {actions ? (
-              <div className="hidden md:flex items-center ml-2 pl-2 border-l border-white/[0.08]">
+              <div className="hidden md:flex items-center ml-2 pl-2 border-l border-border-strong">
                 {actions}
               </div>
             ) : null}
 
+            <ThemeToggle />
+
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="md:hidden flex items-center justify-center w-9 h-9 rounded-md text-ink hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-md text-ink hover:bg-overlay-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="Open menu"
               aria-expanded={open}
               aria-controls="mobile-menu"
@@ -139,7 +144,7 @@ export function Nav({ items, actions, brand }: NavProps) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center w-11 h-11 rounded-lg text-ink hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex items-center justify-center w-11 h-11 rounded-lg text-ink hover:bg-overlay-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label="Close menu"
               >
                 <IconX size={20} />
@@ -170,7 +175,7 @@ export function Nav({ items, actions, brand }: NavProps) {
             </div>
 
             {actions ? (
-              <div className="mt-auto pt-6 border-t border-white/10">{actions}</div>
+              <div className="mt-auto pt-6 border-t border-border-strong">{actions}</div>
             ) : null}
           </div>
         </div>

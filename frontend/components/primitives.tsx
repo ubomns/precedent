@@ -2,7 +2,6 @@
 
 import { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ThemeToggle } from "./theme-toggle";
 import {
   IconArrow,
   IconArrowDiag,
@@ -350,12 +349,6 @@ export function GlassNav({
           </button>
         );
       })}
-      <div
-        className="ml-1 pl-1 flex items-center"
-        style={{ borderLeft: "1px solid var(--bezel-ring)" }}
-      >
-        <ThemeToggle />
-      </div>
     </nav>
   );
 }

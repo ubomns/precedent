@@ -1,12 +1,16 @@
 (function () {
   try {
-    const theme = localStorage.getItem("theme");
+    const stored = localStorage.getItem("theme");
+    const prefersLight =
+      window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    const theme = stored || (prefersLight ? "light" : "dark");
+    const el = document.documentElement;
     if (theme === "light") {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.classList.add("light");
+      el.classList.remove("dark");
+      el.classList.add("light");
     } else {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
+      el.classList.add("dark");
+      el.classList.remove("light");
     }
   } catch (e) {}
 })();
