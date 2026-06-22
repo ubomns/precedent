@@ -27,17 +27,23 @@ test.describe("Theme tokens", () => {
 
 test.describe("Theme toggle", () => {
   test("toggles the html class and persists across reload", async ({ page }) => {
-    // Seed localStorage to dark before page load so the no-flash script and
-    // the React component both start in dark mode.
-    await page.goto("/");
-    await page.evaluate(() => localStorage.setItem("theme", "dark"));
+    // Pin the OS preference to dark so the no-stored-choice default is deterministic
+    // (Playwright emulates colorScheme: light by default, which theme.js now honors).
+    await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
     const html = page.locator("html");
     await expect(html).toHaveClass(/dark/);
     await page.getByRole("button", { name: /switch to light mode/i }).click();
     await expect(html).toHaveClass(/light/);
     await expect(html).not.toHaveClass(/dark/);
+    // Stored choice must override the dark OS preference after reload.
     await page.reload();
+    await expect(page.locator("html")).toHaveClass(/light/);
+  });
+
+  test("honors prefers-color-scheme: light when no stored choice", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/");
     await expect(page.locator("html")).toHaveClass(/light/);
   });
 
