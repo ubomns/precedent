@@ -5,13 +5,16 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 // Next.js dev mode (HMR / React Refresh) evaluates strings as JavaScript, which
 // requires 'unsafe-eval'. Production builds do not, so keep the directive strict there.
 const isDev = process.env.NODE_ENV !== "production";
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : "";
 
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self'",
+  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
   "img-src 'self' data: blob:",
   "media-src 'self'",
   "object-src 'none'",
