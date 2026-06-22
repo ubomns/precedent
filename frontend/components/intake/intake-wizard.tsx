@@ -62,12 +62,15 @@ function StepInput({
   }
 
   if (step.input === "text") {
+    // Derive the answer key from stepKey (not hardcoded "users") so additional
+    // single-line text steps bind their own field instead of silently writing users.
+    const textKey = stepKey as "objective" | "scopeIn" | "scopeOut" | "users" | "regulatory";
     return (
       <TextInput
         id={id}
         label={step.label}
-        value={state.answers.users}
-        onChange={(value) => dispatch({ type: "SET_TEXT", key: "users", value })}
+        value={state.answers[textKey]}
+        onChange={(value) => dispatch({ type: "SET_TEXT", key: textKey, value })}
         onSubmit={onSubmit}
         error={error}
         autoFocus={autoFocus}
