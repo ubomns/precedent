@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/design-system/card";
-import { Body, Caption } from "@/components/design-system/typography";
+import { Caption } from "@/components/design-system/typography";
 
 export function Validation() {
   return (
@@ -22,6 +22,9 @@ export function Validation() {
           />
 
           <blockquote className="relative pl-6">
+            <Caption className="mb-4 inline-block uppercase tracking-[0.14em] text-secondary">
+              Illustrative example
+            </Caption>
             <p className="text-h3 font-medium leading-[1.3] tracking-[-0.01em] text-ink">
               &ldquo;What surprised me was how closely the output matched our house
               template structure. The Security Controls and User Access Management
@@ -29,8 +32,10 @@ export function Validation() {
               start.&rdquo;
             </p>
             <footer className="mt-6 flex flex-col gap-1">
-              <Caption className="text-ink">Senior Business Analyst</Caption>
-              <Caption className="text-secondary">Financial Services</Caption>
+              <Caption className="text-secondary">
+                Representative of the feedback Precedent is built to earn — not a
+                sourced customer quote.
+              </Caption>
             </footer>
           </blockquote>
         </Card>

@@ -58,6 +58,16 @@ export function WhoItsFor() {
             for v1.1. If you work independently, the default template is clean,
             numbered, and ready to submit.
           </Body>
+          <Body className="mt-6 text-secondary">
+            Team and enterprise pricing available —{" "}
+            <a
+              href="mailto:hello@nsikak.dev?subject=Precedent%20team%20pricing"
+              className="font-medium text-accent underline-offset-4 hover:underline"
+            >
+              contact hello@nsikak.dev
+            </a>
+            .
+          </Body>
         </div>
       </div>
     </section>

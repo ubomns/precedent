@@ -26,7 +26,7 @@ test.describe("Landing Page", () => {
     await expect(page.getByRole("heading", { name: "The 12 sections" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "See the output before you commit" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Built for regulated environments" })).toBeVisible();
-    await expect(page.getByText("Senior Business Analyst")).toBeVisible();
+    await expect(page.getByText("Illustrative example")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Ready to draft your next BRD?" })).toBeVisible();
   });
 
