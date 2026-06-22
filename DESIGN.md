@@ -14,7 +14,7 @@ Precedent is a two-agent AI tool for Business Analysts in regulated/enterprise e
 ## 2. Brand World
 
 | Token | Value | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | **Theme** | Deep Dark Mode | BAs work in long focused sessions; dark reduces eye strain and signals "serious tool" |
 | **Base Background** | `#050505` (near-black, OLED depth) | Deepest possible black; content floats in space |
 | **Surface Elevations** | `#0A0A0A` to `#111111` | Subtle stepped depth for cards and panels |
@@ -24,7 +24,7 @@ Precedent is a two-agent AI tool for Business Analysts in regulated/enterprise e
 | **Hairline Borders** | `rgba(255,255,255,0.06)` | Barely visible structural lines |
 | **Typography Family** | `Geist` (Sans) + `Geist Mono` (Data/Tables) | Modern, engineered, precise. Tight tracking on headers |
 | **Radius Language** | `2rem` (32px) for major cards, `9999px` for pills | Generous, friendly but authoritative |
-| **Shadow System** | Diffused ambient shadows only. No harsh dark drop shadows. Use `0 20px 40px -15px rgba(0,0,0,0.05)` for subtle lift |
+| **Shadow System** | Diffused ambient shadows only | No harsh dark drop shadows. Use `0 20px 40px -15px rgba(0,0,0,0.05)` for subtle lift |
 
 ---
 
@@ -140,6 +140,7 @@ Workspace. Power tool. The BA is reviewing a document that feels like it was wri
 ## 6. Motion & Micro-Interaction (Implied in static mocks)
 
 Even though these are static images, the design must **imply** motion:
+
 - Cards should feel like they float — achieved through diffused shadows and slight elevation steps.
 - Buttons should look tactile — achieved through inner highlights and nested icon architecture.
 - The critic badges should feel like live status indicators — achieved through bright, intentional color against the dark ground.

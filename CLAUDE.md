@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Layout
 
-```
+```text
 .
 ├── frontend/             Next.js 15 App Router + Python serverless functions (Vercel project)
 │   ├── app/              Next.js pages and layouts
@@ -38,21 +38,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 All commands run from `frontend/`.
 
 **Local dev (unified):**
+
 - `vercel dev` — runs Next.js + the Python serverless function on a single port. `/api/*` calls route to the FastAPI app. This is the primary local workflow.
 - `vercel env pull` — pulls env vars from Vercel into `.env.local` (do once before `vercel dev`).
 
 **Frontend-only iteration (faster, no Python):**
+
 - `npm run dev` — Next.js dev server, port 3000. `/api/*` calls will 404 unless you point `NEXT_PUBLIC_API_URL` at a separate backend (see `.env.local.example`).
 - `npm run build` / `npm start` — production build/serve.
 - `npm run lint` — `next lint`.
 
 **Tests:**
+
 - `npm test` — Playwright full suite. The config spins up its own `next dev -p 3001`, so do **not** start a frontend server manually before running tests; it would race on the port.
 - `npm run test:ui` — Playwright UI mode.
 - `npx playwright test tests/review.spec.ts` — single spec file.
 - `npx playwright test -g "submits intake form"` — single test by name.
 
 **Deploy:**
+
 - `vercel deploy` — preview deploy.
 - `vercel deploy --prod` — promote to production.
 
@@ -60,7 +64,7 @@ All commands run from `frontend/`.
 
 Precedent is a **two-agent BRD generator**: a structured project brief becomes a 12-section Business Requirements Document. The end-to-end flow:
 
-```
+```text
 Intake (/intake) ── BriefInput ──> POST /api/generate
                                        │ asyncio.gather over 12 sections
                                        │ drafter.draft_section() per section
@@ -97,6 +101,7 @@ Function timeout: Vercel Hobby with Fluid Compute gives 300s by default (no expl
 ### Drafter/Critic agents
 
 Both `_lib/agents/drafter.py` and `_lib/agents/critic.py`:
+
 - Use a lazily-initialized `AsyncOpenAI` client (`get_client()`) reading `OPENAI_API_KEY`.
 - Call `gpt-4.1-mini` with `response_format={"type": "json_schema", strict: True}`. Do not change the model casually — the schemas use OpenAI strict-mode constraints (`additionalProperties: False`, all properties required), which only some models support.
 - Drafter: `temperature=0.4`, `max_tokens=1536`.
@@ -107,7 +112,7 @@ Both `_lib/agents/drafter.py` and `_lib/agents/critic.py`:
 Sections with array items use prefixes that the renderer auto-generates and the critic is prompt-instructed to use:
 
 | section | prefix |
-|---|---|
+| --- | --- |
 | functional_requirements | FR |
 | non_functional_requirements | NFR |
 | acceptance_criteria | AC |

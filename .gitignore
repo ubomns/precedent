@@ -57,3 +57,6 @@ desktop.ini
 # ─── Misc ───
 coverage/
 .cache/
+
+.vercel
+.env*.local

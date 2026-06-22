@@ -25,7 +25,7 @@ Executive Summary · Business Objective · Scope · Stakeholders · Functional R
 ## Stack
 
 | Layer | Tech |
-|---|---|
+| --- | --- |
 | API | Python 3.12 (Vercel Python runtime), FastAPI, AsyncOpenAI (`gpt-4.1-mini`, `response_format: json_schema, strict: true`), python-docx |
 | Frontend | Next.js 15.5 App Router, React 19 GA, TypeScript, Tailwind CSS, Zustand, Framer Motion, Phosphor Icons |
 | Hosting | Vercel (single project — Next.js + Python serverless on one domain) |
@@ -70,7 +70,7 @@ npm run dev                     # Next.js dev server, port 3000
 
 ## Project structure
 
-```
+```text
 .
 ├── frontend/                       Vercel project root
 │   ├── app/
