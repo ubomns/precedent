@@ -14,7 +14,7 @@ export function Eyebrow({ children, className = "", ...rest }: TypographyProps) 
   return (
     <span
       className={[
-        "inline-flex items-center gap-2 rounded-full px-3 py-1 text-eyebrow uppercase tracking-[0.18em] text-secondary ring-1 ring-white/10 bg-white/[0.025]",
+        "inline-flex items-center gap-2 rounded-full px-3 py-1 text-eyebrow uppercase tracking-[0.18em] text-secondary ring-1 ring-border-strong bg-overlay",
         className,
       ].join(" ")}
       {...rest}

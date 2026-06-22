@@ -33,7 +33,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary:
     "bg-accent text-ground hover:bg-accent-hover focus-visible:ring-accent",
   secondary:
-    "bg-transparent border border-white/10 text-ink hover:bg-surface-2 focus-visible:ring-accent",
+    "bg-transparent border border-border-strong text-ink hover:bg-surface-2 focus-visible:ring-accent",
   ghost:
     "bg-transparent border border-border-strong text-ink hover:bg-surface-2 focus-visible:ring-accent",
 };
@@ -118,7 +118,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
 
     const isDisabled =
       ("disabled" in props && props.disabled) || loading;
-    const wellBg = variant === "primary" ? "bg-white/15" : "bg-white/10";
+    const wellBg = variant === "primary" ? "bg-white/15" : "bg-overlay-strong";
 
     if ("href" in props && props.href) {
       const {

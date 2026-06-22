@@ -10,7 +10,7 @@ export function AssistantBubble({ children }: { children: ReactNode }) {
         aria-hidden="true"
         className="mt-2.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0"
       />
-      <div className="rounded-2xl rounded-tl-sm bg-surface-2 border border-white/[0.06] px-4 py-3 text-body text-ink">
+      <div className="rounded-2xl rounded-tl-sm bg-surface-2 border border-border px-4 py-3 text-body text-ink">
         {children}
       </div>
     </div>
@@ -28,7 +28,7 @@ export function UserBubble({
 }) {
   return (
     <div className="flex flex-col items-end gap-1 self-end max-w-[85%]" data-bubble="user">
-      <div className="rounded-2xl rounded-br-sm bg-surface border border-white/[0.08] px-4 py-3 text-body text-ink">
+      <div className="rounded-2xl rounded-br-sm bg-surface border border-border-strong px-4 py-3 text-body text-ink">
         {children}
       </div>
       {onEdit ? (

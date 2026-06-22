@@ -23,7 +23,7 @@ export function ReviewCard({
       <h2 className="text-h3 font-medium text-ink tracking-tight">Review your brief</h2>
       <p className="mt-1 text-body-sm text-secondary">Edit anything before generating.</p>
 
-      <dl className="mt-5 flex flex-col divide-y divide-white/[0.06]">
+      <dl className="mt-5 flex flex-col divide-y divide-border">
         {STEPS.map((step) => (
           <div key={step.key} className="flex items-start justify-between gap-4 py-3">
             <div className="min-w-0">
@@ -38,7 +38,7 @@ export function ReviewCard({
               type="button"
               onClick={() => onEdit(step.key)}
               aria-label={`Edit ${step.label.toLowerCase()}`}
-              className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-caption text-secondary hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="shrink-0 rounded-lg border border-border-strong px-3 py-1.5 text-caption text-secondary hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Edit
             </button>

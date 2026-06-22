@@ -34,7 +34,7 @@ export function SampleOutput() {
           <div data-reveal className="order-1 lg:order-2">
             <Card padding="none" className="overflow-hidden bg-surface-2">
               {/* Document chrome */}
-              <div className="flex items-center gap-2 border-b border-white/10 bg-surface px-4 py-3">
+              <div className="flex items-center gap-2 border-b border-border-strong bg-surface px-4 py-3">
                 <span className="h-2.5 w-2.5 rounded-full bg-tertiary/50" aria-hidden="true" />
                 <span className="h-2.5 w-2.5 rounded-full bg-tertiary/50" aria-hidden="true" />
                 <span className="h-2.5 w-2.5 rounded-full bg-tertiary/50" aria-hidden="true" />
@@ -57,31 +57,31 @@ export function SampleOutput() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="h-1.5 w-3/4 rounded bg-white/10" />
-                    <div className="h-1.5 w-full rounded bg-white/10" />
-                    <div className="h-1.5 w-5/6 rounded bg-white/10" />
+                    <div className="h-1.5 w-3/4 rounded bg-overlay-strong" />
+                    <div className="h-1.5 w-full rounded bg-overlay-strong" />
+                    <div className="h-1.5 w-5/6 rounded bg-overlay-strong" />
                   </div>
 
                   <div className="mt-5 space-y-1.5">
                     <p className="text-xs font-medium text-secondary">1. Executive Summary</p>
-                    <div className="h-1 w-full rounded bg-white/5" />
-                    <div className="h-1 w-11/12 rounded bg-white/5" />
+                    <div className="h-1 w-full rounded bg-overlay" />
+                    <div className="h-1 w-11/12 rounded bg-overlay" />
                   </div>
 
                   <div className="mt-4 space-y-1.5">
                     <p className="text-xs font-medium text-secondary">5. Functional Requirements</p>
-                    <div className="h-1 w-full rounded bg-white/5" />
-                    <div className="h-1 w-10/12 rounded bg-white/5" />
-                    <div className="h-1 w-11/12 rounded bg-white/5" />
+                    <div className="h-1 w-full rounded bg-overlay" />
+                    <div className="h-1 w-10/12 rounded bg-overlay" />
+                    <div className="h-1 w-11/12 rounded bg-overlay" />
                   </div>
 
                   <div className="mt-4 space-y-1.5">
                     <p className="text-xs font-medium text-secondary">11. Security Controls</p>
-                    <div className="h-1 w-full rounded bg-white/5" />
-                    <div className="h-1 w-9/12 rounded bg-white/5" />
+                    <div className="h-1 w-full rounded bg-overlay" />
+                    <div className="h-1 w-9/12 rounded bg-overlay" />
                   </div>
 
-                  <div className="mt-5 border-t border-white/10 pt-3">
+                  <div className="mt-5 border-t border-border-strong pt-3">
                     <div className="flex items-center justify-between text-[10px] text-tertiary">
                       <span>12 sections</span>
                       <span>.docx format</span>

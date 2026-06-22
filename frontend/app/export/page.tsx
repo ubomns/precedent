@@ -204,7 +204,7 @@ export default function ExportPage() {
                 </div>
               </div>
 
-              <div className="h-px bg-white/[0.06]" />
+              <div className="h-px bg-border" />
 
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
@@ -215,7 +215,7 @@ export default function ExportPage() {
                     {visitedSections.size} / {totalSections}
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-1.5 rounded-full bg-overlay overflow-hidden">
                   <div
                     className="h-full bg-accent transition-all duration-700"
                     style={{

@@ -67,3 +67,20 @@ test.describe("Theme toggle", () => {
     }
   });
 });
+
+test.describe("Light mode has no overflow across pages", () => {
+  for (const path of ["/", "/intake"]) {
+    test(`no horizontal overflow on ${path} in light mode (mobile)`, async ({ page }) => {
+      await page.addInitScript(() => localStorage.setItem("theme", "light"));
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(path);
+      await expect(page.locator("html")).toHaveClass(/light/);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+      // a primary CTA / heading remains visible (not washed out to invisibility)
+      await expect(page.getByRole("heading").first()).toBeVisible();
+    });
+  }
+});

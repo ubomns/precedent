@@ -106,7 +106,7 @@ function DataTable({
     <div className="overflow-x-auto -mx-2 px-2">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-white/[0.06]">
+          <tr className="border-b border-border">
             {headers.map((h, i) => (
               <th
                 key={i}
@@ -119,7 +119,7 @@ function DataTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.key} className="border-b border-white/[0.06]">
+            <tr key={row.key} className="border-b border-border">
               {row.cells.map((cell, i) => (
                 <td key={i} className="py-3.5 pr-4 text-body leading-relaxed">
                   {cell}
@@ -197,7 +197,7 @@ function SectionBody({
           key: i,
           cells: [
             <div key="name" className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-white/10 flex items-center justify-center text-caption font-medium text-ink">
+              <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-border-strong flex items-center justify-center text-caption font-medium text-ink">
                 {p.name
                   .split(" ")
                   .map((x: string) => x[0])
@@ -477,7 +477,7 @@ function RegenerateControls({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe what you want changed…"
               rows={4}
-              className="w-full bg-surface-2 border border-white/10 rounded-xl px-4 py-3 text-body text-ink placeholder:text-tertiary leading-relaxed mb-4 focus:outline-none focus:border-accent-dim focus:ring-[3px] focus:ring-accent/15"
+              className="w-full bg-surface-2 border border-border-strong rounded-xl px-4 py-3 text-body text-ink placeholder:text-tertiary leading-relaxed mb-4 focus:outline-none focus:border-accent-dim focus:ring-[3px] focus:ring-accent/15"
               autoFocus
             />
             <div className="flex flex-col sm:flex-row gap-3">
@@ -589,7 +589,7 @@ function CriticCard({
     <Card padding="md" tone="elevated">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-white/10 flex items-center justify-center text-accent">
+          <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-border-strong flex items-center justify-center text-accent">
             <IconShield size={14} />
           </span>
           <Body className="font-medium text-ink">Critic Review</Body>
@@ -614,7 +614,7 @@ function CriticCard({
         ))}
 
         {low.length > 0 && !showLow && (
-          <li className="border-t border-white/[0.06] pt-4 mt-1">
+          <li className="border-t border-border pt-4 mt-1">
             <button
               type="button"
               onClick={() => setShowLow(true)}
@@ -660,7 +660,7 @@ function CriticIssueRow({
 }) {
   const isApplying = applying === `accept-${index}`;
   return (
-    <li className={`flex gap-4 py-4 ${!first ? "border-t border-white/[0.06]" : ""}`}>
+    <li className={`flex gap-4 py-4 ${!first ? "border-t border-border" : ""}`}>
       <div className="shrink-0 self-start pt-0.5">
         <Badge severity={issue.severity} />
       </div>
@@ -686,7 +686,7 @@ function CriticIssueRow({
           <button
             type="button"
             onClick={() => onReject(index)}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption tracking-tight transition-colors bg-surface-2 text-secondary ring-1 ring-white/10 hover:text-ink hover:bg-white/[0.08]"
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption tracking-tight transition-colors bg-surface-2 text-secondary ring-1 ring-border-strong hover:text-ink hover:bg-overlay-strong"
           >
             <IconX size={11} />
             Reject
@@ -884,7 +884,7 @@ export default function ReviewPage() {
         {/* Sidebar */}
         <aside
           className={[
-            "fixed inset-y-0 left-0 z-40 w-[280px] bg-ground/95 backdrop-blur-xl border-r border-white/[0.06] transform transition-transform duration-300 md:translate-x-0 md:static md:w-[260px] md:bg-surface md:backdrop-blur-none md:border md:rounded-2xl md:flex-shrink-0 md:h-[calc(100dvh-7rem)] md:sticky md:top-24",
+            "fixed inset-y-0 left-0 z-40 w-[280px] bg-ground/95 backdrop-blur-xl border-r border-border transform transition-transform duration-300 md:translate-x-0 md:static md:w-[260px] md:bg-surface md:backdrop-blur-none md:border md:rounded-2xl md:flex-shrink-0 md:h-[calc(100dvh-7rem)] md:sticky md:top-24",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
           ].join(" ")}
           role="navigation"
@@ -898,7 +898,7 @@ export default function ReviewPage() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(false)}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/[0.08]"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-overlay-strong"
                 aria-label="Close section menu"
               >
                 <IconX size={18} />
@@ -927,7 +927,7 @@ export default function ReviewPage() {
                       "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors",
                       isActive
                         ? "bg-accent/10 text-ink"
-                        : "hover:bg-white/[0.04] text-secondary hover:text-ink",
+                        : "hover:bg-overlay text-secondary hover:text-ink",
                     ].join(" ")}
                   >
                     {isActive && (
@@ -963,7 +963,7 @@ export default function ReviewPage() {
               })}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-3">
+            <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between">
                   <Caption className="uppercase tracking-[0.14em] text-tertiary font-mono">
@@ -1055,7 +1055,7 @@ export default function ReviewPage() {
               <Card padding="md" tone="elevated">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-white/10 flex items-center justify-center text-secondary">
+                    <span className="w-8 h-8 rounded-full bg-surface-2 ring-1 ring-border-strong flex items-center justify-center text-secondary">
                       <IconDoc size={14} />
                     </span>
                     <Body className="font-medium text-ink">Drafted Content</Body>
@@ -1111,7 +1111,7 @@ export default function ReviewPage() {
               )}
 
               {/* Footer nav */}
-              <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
+              <div className="flex items-center justify-between pt-4 border-t border-border">
                 {prev ? (
                   <button
                     type="button"

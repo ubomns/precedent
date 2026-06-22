@@ -74,7 +74,7 @@ export function StakeholdersInput({
               if (el) rowRefs.current.set(row.id, el);
               else rowRefs.current.delete(row.id);
             }}
-            className="flex gap-2 sm:gap-3 items-start bg-surface-2 rounded-xl border border-white/[0.06] p-3 sm:p-4 transition-colors hover:border-white/[0.10]"
+            className="flex gap-2 sm:gap-3 items-start bg-surface-2 rounded-xl border border-border p-3 sm:p-4 transition-colors hover:border-border-strong"
           >
             <div className="flex-1 min-w-0">
               <Input
@@ -98,7 +98,7 @@ export function StakeholdersInput({
               disabled={rows.length <= 1}
               className={[
                 "flex items-center justify-center w-11 h-11 rounded-lg shrink-0",
-                "border border-white/10 bg-white/[0.02] text-tertiary",
+                "border border-border-strong bg-overlay text-tertiary",
                 "hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                 rows.length <= 1 ? "opacity-40 cursor-not-allowed" : "",
