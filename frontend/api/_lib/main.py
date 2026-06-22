@@ -1,43 +1,121 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from _lib.routers import generate, export
+from _lib.limiter import limiter
+from _lib.routers import export, generate
 
-# Load environment variables from .env file
-# Try multiple paths for robustness
-current_file = Path(__file__).resolve()
-env_paths = [
-    current_file.parent.parent / ".env",
-    Path(".env").resolve(),
-    Path(os.getcwd()) / ".env",
+# Load environment variables from a single deterministic path.
+env_path = Path(__file__).resolve().parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+
+API_SECRET_KEY = os.getenv("API_SECRET_KEY")
+
+DEFAULT_ORIGINS = "https://precedent.app,http://localhost:3000,http://localhost:3001"
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", DEFAULT_ORIGINS).split(",")
+    if origin.strip()
 ]
-
-for env_path in env_paths:
-    if env_path.exists():
-        load_dotenv(env_path)
-        print(f"[ENV] Loaded .env from: {env_path}")
-        break
-else:
-    print("[ENV] No .env file found!")
-
-print(f"[ENV] OPENAI_API_KEY present: {'YES' if os.getenv('OPENAI_API_KEY') else 'NO'}")
 
 app = FastAPI(title="Precedent API", version="1.0.0")
 
+app.state.limiter = limiter
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Return a consistent error shape for all HTTP exceptions."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": str(exc.status_code), "message": exc.detail}},
+    )
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "error": {
+                "code": "RATE_LIMIT_EXCEEDED",
+                "message": "Rate limit exceeded. Please slow down.",
+            }
+        },
+    )
+
+
+class MaxBodySizeMiddleware(BaseHTTPMiddleware):
+    """Reject request bodies larger than the configured limit."""
+
+    def __init__(self, app, max_size_bytes: int):
+        super().__init__(app)
+        self.max_size_bytes = max_size_bytes
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method in ("POST", "PUT", "PATCH"):
+            content_length = request.headers.get("content-length")
+            if content_length and int(content_length) > self.max_size_bytes:
+                return JSONResponse(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    content={
+                        "error": {
+                            "code": "PAYLOAD_TOO_LARGE",
+                            "message": "Request body exceeds maximum allowed size.",
+                        }
+                    },
+                )
+        return await call_next(request)
+
+
+app.add_middleware(MaxBodySizeMiddleware, max_size_bytes=2 * 1024 * 1024)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
-app.include_router(generate.router, prefix="/api", tags=["generate"])
-app.include_router(export.router, prefix="/api", tags=["export"])
+
+async def verify_api_key(request: Request):
+    """Require a valid Bearer token on protected routes."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+        )
+    token = auth_header[7:]
+    if not API_SECRET_KEY or token != API_SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
+        )
+    return token
+
 
 @app.get("/")
 async def root():
     return {"message": "Precedent API is running."}
+
+
+app.include_router(
+    generate.router,
+    prefix="/api",
+    tags=["generate"],
+    dependencies=[Depends(verify_api_key)],
+)
+app.include_router(
+    export.router,
+    prefix="/api",
+    tags=["export"],
+    dependencies=[Depends(verify_api_key)],
+)
