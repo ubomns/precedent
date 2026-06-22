@@ -2,14 +2,17 @@ import asyncio
 import json
 import re
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 
 from _lib.agents.critic import critique_section
 from _lib.agents.drafter import draft_section, SECTION_SCHEMAS, get_client
+from _lib.auth import get_current_user
 from _lib.limiter import limiter
 from _lib.schemas.brd import BriefInput, MAX_LONG_TEXT
+from _lib.services.quota import consume_quota
 
 router = APIRouter()
 
@@ -77,11 +80,29 @@ class CritiqueRequest(BaseModel):
 
 @router.post("/generate")
 @limiter.limit("10/minute")
-async def generate_brd(request: Request, brief: BriefInput):
+async def generate_brd(
+    request: Request,
+    brief: BriefInput,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Accepts a structured brief and returns a complete BRD document.
-    Runs drafter for each of the 12 sections. Critique is run separately on demand.
+    Consumes one generation from the user's quota, then runs the drafter for
+    each of the 12 sections. Critique is run separately on demand.
     """
+    quota = await consume_quota(current_user["user_id"])
+    if not quota["allowed"]:
+        return JSONResponse(
+            status_code=402,
+            content={
+                "error": {
+                    "code": "QUOTA_EXCEEDED",
+                    "tier": quota["tier"],
+                    "remaining": quota["remaining"],
+                }
+            },
+        )
+
     try:
         sections = [
             "executive_summary",
