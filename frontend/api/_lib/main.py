@@ -9,6 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from _lib.auth import get_current_user
 from _lib.limiter import limiter
 from _lib.routers import export, generate
 
@@ -16,8 +17,6 @@ from _lib.routers import export, generate
 env_path = Path(__file__).resolve().parent.parent / ".env"
 if env_path.exists():
     load_dotenv(env_path)
-
-API_SECRET_KEY = os.getenv("API_SECRET_KEY")
 
 DEFAULT_ORIGINS = "https://precedent.app,http://localhost:3000,http://localhost:3001"
 ALLOWED_ORIGINS = [
@@ -90,22 +89,6 @@ app.add_middleware(
 )
 
 
-async def verify_api_key(request: Request):
-    """Require a valid Bearer token on protected routes."""
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing or invalid Authorization header",
-        )
-    token = auth_header[7:]
-    if not API_SECRET_KEY or token != API_SECRET_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
-        )
-    return token
-
-
 @app.get("/")
 async def root():
     return {"message": "Precedent API is running."}
@@ -115,11 +98,11 @@ app.include_router(
     generate.router,
     prefix="/api",
     tags=["generate"],
-    dependencies=[Depends(verify_api_key)],
+    dependencies=[Depends(get_current_user)],
 )
 app.include_router(
     export.router,
     prefix="/api",
     tags=["export"],
-    dependencies=[Depends(verify_api_key)],
+    dependencies=[Depends(get_current_user)],
 )
