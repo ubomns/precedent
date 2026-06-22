@@ -12,15 +12,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── lib/store.ts      Zustand global store
 │   ├── tests/            Playwright specs
 │   ├── api/
-│   │   ├── [...path].py  Vercel ASGI catch-all — re-exports the FastAPI app
+│   │   ├── handler.py    Vercel ASGI catch-all — re-exports the FastAPI app
 │   │   └── _lib/         FastAPI app (private; `_` prefix keeps Vercel from
 │   │                     treating files here as additional functions)
 │   │       ├── main.py
+│   │       ├── auth.py   Supabase JWT verification (get_current_user)
 │   │       ├── routers/{generate,export}.py
 │   │       ├── agents/{drafter,critic}.py
 │   │       ├── schemas/brd.py
 │   │       └── services/renderer.py
-│   ├── requirements.txt  Python deps for Vercel build (fastapi, pydantic, openai, python-docx)
+│   ├── api/requirements.txt  Python deps for Vercel build (fastapi, pydantic, openai, python-docx)
 │   ├── package.json      Node deps
 │   ├── vercel.json       framework=nextjs (Python runtime auto-detected from api/*.py)
 │   └── .env.local.example
@@ -29,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 └── DESIGN.md             Visual contract — see "Design system" below
 ```
 
-**There is no separate `backend/` directory anymore.** The Python code lives at `frontend/api/_lib/` and is served by Vercel as a single Python serverless function via the ASGI catch-all at `frontend/api/[...path].py`.
+**There is no separate `backend/` directory anymore.** The Python code lives at `frontend/api/_lib/` and is served by Vercel as a single Python serverless function via the ASGI catch-all at `frontend/api/handler.py`.
 
 `OPENAI_API_KEY` is set on Vercel (Production, Preview, Development). For local dev, run `vercel env pull` inside `frontend/` to materialize a `.env.local` from Vercel, then `vercel dev`.
 
@@ -81,9 +82,11 @@ Export (/export) ── POST /api/export ──> StreamingResponse(.docx) via se
 
 ### How requests reach Python on Vercel
 
-`frontend/api/[...path].py` is a Vercel filesystem catch-all route — any URL matching `/api/*` is sent to this file. Inside, it pushes its own directory onto `sys.path` and re-exports the FastAPI `app` from `_lib.main`. Vercel detects the `app` symbol as an ASGI application and proxies the request. FastAPI sees the original `/api/generate` path (Vercel does not rewrite under filesystem catch-all routing), so the routes mounted with `prefix="/api"` in `_lib/routers/*.py` match directly.
+`frontend/api/handler.py` is the Vercel ASGI entrypoint — any URL matching `/api/*` is sent to this file. Inside, it pushes its own directory onto `sys.path` and re-exports the FastAPI `app` from `_lib.main`. Vercel detects the `app` symbol as an ASGI application and proxies the request. FastAPI sees the original `/api/generate` path (Vercel does not rewrite under filesystem catch-all routing), so the routes mounted with `prefix="/api"` in `_lib/routers/*.py` match directly.
 
 The `_lib/` directory is named with a leading underscore so Vercel does **not** treat its `.py` files as additional serverless function routes — it's just a private Python package the catch-all imports from.
+
+**API auth:** all requests to protected routes are verified via Supabase JWT (`_lib/auth.py::get_current_user`; HS256, `SUPABASE_JWT_SECRET`). The old `NEXT_PUBLIC_API_SECRET_KEY` shared-secret scheme is retired. `/generate` also calls the `consume_quota` Postgres RPC to enforce per-user generation limits (Registered tier = 3 lifetime; Subscribed tier = unlimited).
 
 Function timeout: Vercel Hobby with Fluid Compute gives 300s by default (no explicit `maxDuration` in `vercel.json`). 12-way parallel OpenAI fan-out typically completes in 15–30s wallclock.
 

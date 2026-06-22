@@ -1,7 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-process.env.NEXT_PUBLIC_API_SECRET_KEY ??= "test-secret";
-
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -34,7 +32,6 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
-        NEXT_PUBLIC_API_SECRET_KEY: process.env.NEXT_PUBLIC_API_SECRET_KEY,
         NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
         NEXT_PUBLIC_SUPABASE_ANON_KEY: "stub-anon-key",
       },
