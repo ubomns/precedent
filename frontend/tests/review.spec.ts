@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { walkIntakeWizard } from "./helpers";
+import { stubAuth, TEST_ACCESS_TOKEN } from "./helpers-auth";
 
 async function mockGenerateAPI(page: any, onAuth: (header: string | null) => void) {
   await page.route("**/api/generate", async (route: any) => {
@@ -93,13 +94,14 @@ async function mockGenerateAPI(page: any, onAuth: (header: string | null) => voi
 test.describe("Review Page", () => {
   test.beforeEach(async ({ page }) => {
     let authHeader: string | null = null;
+    await stubAuth(page);
     await mockGenerateAPI(page, (header) => {
       authHeader = header;
     });
     await walkIntakeWizard(page);
     await page.getByRole("button", { name: /Generate BRD/i }).click();
     await expect(page).toHaveURL(/\/review/, { timeout: 15000 });
-    expect(authHeader).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
+    expect(authHeader).toBe(`Bearer ${TEST_ACCESS_TOKEN}`);
   });
 
   test("renders sidebar with all 12 sections", async ({ page }) => {

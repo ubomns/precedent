@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { walkIntakeWizard } from "./helpers";
+import { stubAuth, TEST_ACCESS_TOKEN } from "./helpers-auth";
 
 test.describe("Export Page", () => {
   test.beforeEach(async ({ page }) => {
     let generateAuth: string | null = null;
+    await stubAuth(page);
     await page.route("**/api/generate", async (route: any) => {
       // Capture and assert after navigation; a throw inside the handler would
       // leave the route unfulfilled and surface only as a nav timeout.
@@ -33,7 +35,7 @@ test.describe("Export Page", () => {
     await walkIntakeWizard(page);
     await page.getByRole("button", { name: /Generate BRD/i }).click();
     await expect(page).toHaveURL(/\/review/, { timeout: 15000 });
-    expect(generateAuth).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
+    expect(generateAuth).toBe(`Bearer ${TEST_ACCESS_TOKEN}`);
 
     // Navigate client-side to preserve ephemeral Zustand state.
     await page
@@ -76,7 +78,7 @@ test.describe("Export Page", () => {
     ]);
 
     expect(download.suggestedFilename()).toMatch(/BRD\.docx/i);
-    expect(exportAuth).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
+    expect(exportAuth).toBe(`Bearer ${TEST_ACCESS_TOKEN}`);
   });
 
   test("back-to-review link navigates to review", async ({ page }) => {

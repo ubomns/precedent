@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { stubAuth } from "./helpers-auth";
 
 const okBrd = {
   brd: {
@@ -43,6 +44,7 @@ async function answerAll(page: Page) {
 
 test.describe("Intake Wizard", () => {
   test.beforeEach(async ({ page }) => {
+    await stubAuth(page);
     await page.goto("/intake");
   });
 
@@ -71,9 +73,7 @@ test.describe("Intake Wizard", () => {
   });
 
   test("walks the full conversation and generates", async ({ page }) => {
-    let authHeader: string | null = null;
     await page.route("**/api/generate", async (route) => {
-      authHeader = await route.request().headerValue("authorization");
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -85,7 +85,6 @@ test.describe("Intake Wizard", () => {
     await page.getByRole("button", { name: "Generate BRD" }).click();
 
     await expect(page).toHaveURL(/\/review/, { timeout: 15000 });
-    expect(authHeader).toBe(`Bearer ${process.env.NEXT_PUBLIC_API_SECRET_KEY}`);
   });
 
   test("edits an earlier answer in place", async ({ page }) => {

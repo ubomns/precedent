@@ -110,7 +110,7 @@ export default function ExportPage() {
     try {
       const res = await fetch(apiUrl("/api/export"), {
         method: "POST",
-        headers: apiHeaders(),
+        headers: await apiHeaders(),
         body: JSON.stringify({
           brd,
           project_name: brief?.project_objective || "",

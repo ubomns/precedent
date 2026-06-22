@@ -35,7 +35,7 @@ export function useWizard(): UseWizard {
     try {
       const res = await fetch(apiUrl("/api/generate"), {
         method: "POST",
-        headers: apiHeaders(),
+        headers: await apiHeaders(),
         body: JSON.stringify(brief),
       });
 

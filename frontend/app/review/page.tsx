@@ -539,7 +539,7 @@ function CriticCard({
     try {
       const res = await fetch(apiUrl("/api/apply-critique"), {
         method: "POST",
-        headers: apiHeaders(),
+        headers: await apiHeaders(),
         body: JSON.stringify({
           section_name: sectionKey,
           brief,
@@ -710,7 +710,7 @@ function useExportBRD(projectName?: string) {
     try {
       const res = await fetch(apiUrl("/api/export"), {
         method: "POST",
-        headers: apiHeaders(),
+        headers: await apiHeaders(),
         body: JSON.stringify({ brd }),
       });
       if (!res.ok) throw new Error("Export failed");
@@ -781,7 +781,7 @@ export default function ReviewPage() {
     try {
       const res = await fetch(apiUrl("/api/regenerate-section"), {
         method: "POST",
-        headers: apiHeaders(),
+        headers: await apiHeaders(),
         body: JSON.stringify({
           section_name: activeKey,
           brief,
@@ -805,7 +805,7 @@ export default function ReviewPage() {
     try {
       const res = await fetch(apiUrl("/api/critique"), {
         method: "POST",
-        headers: apiHeaders(),
+        headers: await apiHeaders(),
         body: JSON.stringify({ brd, brief }),
       });
       if (!res.ok) throw new Error("Critique failed");

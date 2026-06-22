@@ -53,13 +53,15 @@ test.describe("Landing Page", () => {
     }
   });
 
-  test("navigates to intake from primary CTA", async ({ page }) => {
+  test("primary CTA sends a logged-out visitor through the auth gate to intake", async ({ page }) => {
+    // /intake is auth-protected, so a logged-out visitor clicking the CTA is
+    // bounced to /login with a next param that returns them to intake post-login.
     await page.goto("/");
     await Promise.all([
-      page.waitForURL(/\/intake/),
+      page.waitForURL(/\/login\?next=%2Fintake/),
       page.getByRole("link", { name: "Generate my BRD — free to try" }).click(),
     ]);
-    await expect(page).toHaveURL(/\/intake/);
+    await expect(page).toHaveURL(/\/login\?next=%2Fintake/);
   });
 
   test("download sample BRD link has correct href", async ({ page }) => {
