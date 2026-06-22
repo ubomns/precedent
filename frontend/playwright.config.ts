@@ -34,6 +34,8 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       NEXT_PUBLIC_API_SECRET_KEY: process.env.NEXT_PUBLIC_API_SECRET_KEY,
+      NEXT_PUBLIC_SUPABASE_URL: "http://localhost:3001",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "stub-anon-key",
     },
   },
 });
