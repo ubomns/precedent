@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import { GsapProvider } from "@/components/motion/gsap-provider";
 import { TransitionLayout } from "@/components/motion/transition-layout";
@@ -10,11 +11,15 @@ export const metadata: Metadata = {
     "Turn a structured project brief into a near-complete Business Requirements Document.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Per-request nonce set by middleware; used to authorize our inline/early scripts
+  // under the strict (nonce-based) CSP.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
@@ -30,7 +35,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-[100dvh] bg-ground text-ink">
-        <Script src="/theme.js" strategy="beforeInteractive" />
+        <Script src="/theme.js" strategy="beforeInteractive" nonce={nonce} />
         <GsapProvider>
           <TransitionLayout>{children}</TransitionLayout>
         </GsapProvider>

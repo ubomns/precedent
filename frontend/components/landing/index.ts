@@ -5,5 +5,6 @@ export { SectionsList } from "./sections-list";
 export { SampleOutput } from "./sample-output";
 export { WhoItsFor } from "./who-its-for";
 export { Validation } from "./validation";
+export { Pricing } from "./pricing";
 export { CtaFooter } from "./cta-footer";
 export { Footer } from "./footer";

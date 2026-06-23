@@ -13,11 +13,21 @@ _ALGORITHMS = ["ES256", "RS256"]
 _jwk_client = None
 
 
-def _jwks_url() -> str | None:
+def _auth_base() -> str | None:
     base = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    return base.rstrip("/") if base else None
+
+
+def _jwks_url() -> str | None:
+    base = _auth_base()
     if not base:
         return None
-    return f"{base.rstrip('/')}/auth/v1/.well-known/jwks.json"
+    return f"{base}/auth/v1/.well-known/jwks.json"
+
+
+def _expected_issuer() -> str | None:
+    base = _auth_base()
+    return f"{base}/auth/v1" if base else None
 
 
 def _get_jwk_client():
@@ -55,12 +65,17 @@ async def get_current_user(request: Request) -> dict:
     token = auth_header[7:]
     try:
         signing_key = client.get_signing_key_from_jwt(token)
-        payload = jwt.decode(
-            token,
-            signing_key.key,
-            algorithms=_ALGORITHMS,
-            audience="authenticated",
-        )
+        decode_kwargs = {
+            "algorithms": _ALGORITHMS,
+            "audience": "authenticated",
+            # Defense in depth: require an expiry and pin the issuer to this project's
+            # auth server so a validly-signed token from elsewhere can't be replayed.
+            "options": {"require": ["exp", "aud", "sub"]},
+        }
+        issuer = _expected_issuer()
+        if issuer:
+            decode_kwargs["issuer"] = issuer
+        payload = jwt.decode(token, signing_key.key, **decode_kwargs)
     except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -59,7 +59,7 @@ function SignupForm() {
   return (
     <AuthCard
       title="Create your account"
-      subtitle="Free to start — 3 BRDs included."
+      subtitle="Free to start — 10 BRDs included."
       footer={
         <>
           Already have an account?{" "}

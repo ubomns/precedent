@@ -54,6 +54,61 @@ def test_generate_401_without_token():
     assert resp.status_code == 401
 
 
+def _refinement_blocked(monkeypatch):
+    async def fake_consume_refinement(user_id):
+        assert user_id == "user-123"
+        return {"allowed": False, "remaining": 0, "tier": "registered"}
+
+    monkeypatch.setattr(
+        generate_router, "consume_refinement", fake_consume_refinement
+    )
+
+
+def test_critique_402_when_refinement_quota_exceeded(authed, monkeypatch):
+    _refinement_blocked(monkeypatch)
+    resp = client.post("/api/critique", json={"brd": {}, "brief": _brief()})
+    assert resp.status_code == 402
+    assert resp.json()["error"]["code"] == "QUOTA_EXCEEDED"
+
+
+def test_regenerate_402_when_refinement_quota_exceeded(authed, monkeypatch):
+    _refinement_blocked(monkeypatch)
+    resp = client.post(
+        "/api/regenerate-section",
+        json={"section_name": "executive_summary", "brief": _brief()},
+    )
+    assert resp.status_code == 402
+    assert resp.json()["error"]["code"] == "QUOTA_EXCEEDED"
+
+
+def test_apply_critique_402_when_refinement_quota_exceeded(authed, monkeypatch):
+    _refinement_blocked(monkeypatch)
+    resp = client.post(
+        "/api/apply-critique",
+        json={
+            "section_name": "executive_summary",
+            "brief": _brief(),
+            "current_content": {},
+            "critique_issue": "x",
+            "critique_suggestion": "y",
+        },
+    )
+    assert resp.status_code == 402
+    assert resp.json()["error"]["code"] == "QUOTA_EXCEEDED"
+
+
+def test_refinement_endpoints_401_without_token():
+    # Router-level auth dependency must reject unauthenticated refinement calls.
+    assert client.post("/api/critique", json={"brd": {}, "brief": _brief()}).status_code == 401
+    assert (
+        client.post(
+            "/api/regenerate-section",
+            json={"section_name": "executive_summary", "brief": _brief()},
+        ).status_code
+        == 401
+    )
+
+
 def test_generate_releases_quota_on_fan_out_failure(authed, monkeypatch):
     """Quota consumed before fan-out → release_quota called when fan-out raises."""
     released_calls = []

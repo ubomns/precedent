@@ -13,9 +13,23 @@ from _lib.agents.drafter import draft_section, SECTION_SCHEMAS, get_client
 from _lib.auth import get_current_user
 from _lib.limiter import limiter
 from _lib.schemas.brd import BriefInput, MAX_LONG_TEXT
-from _lib.services.quota import consume_quota, release_quota
+from _lib.services.quota import consume_quota, consume_refinement, release_quota
 
 router = APIRouter()
+
+
+def _quota_exceeded_response(quota: dict) -> JSONResponse:
+    """402 payload shared by generation and refinement quota checks."""
+    return JSONResponse(
+        status_code=402,
+        content={
+            "error": {
+                "code": "QUOTA_EXCEEDED",
+                "tier": quota["tier"],
+                "remaining": quota["remaining"],
+            }
+        },
+    )
 
 # Patterns commonly used in prompt-injection attempts against LLM system prompts.
 _PROMPT_INJECTION_PATTERNS = [
@@ -93,16 +107,7 @@ async def generate_brd(
     """
     quota = await consume_quota(current_user["user_id"])
     if not quota["allowed"]:
-        return JSONResponse(
-            status_code=402,
-            content={
-                "error": {
-                    "code": "QUOTA_EXCEEDED",
-                    "tier": quota["tier"],
-                    "remaining": quota["remaining"],
-                }
-            },
-        )
+        return _quota_exceeded_response(quota)
 
     try:
         sections = [
@@ -131,7 +136,7 @@ async def generate_brd(
         }
 
         return {"brd": brd_data}
-    except Exception as e:
+    except Exception:
         # Quota was already consumed above; refund it since generation failed.
         try:
             await release_quota(current_user["user_id"])
@@ -140,15 +145,24 @@ async def generate_brd(
                 "Failed to release quota after generation failure for user %s",
                 current_user["user_id"],
             )
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.exception("BRD generation failed for user %s", current_user["user_id"])
+        raise HTTPException(status_code=500, detail="Generation failed. Please try again.")
 
 
 @router.post("/critique")
 @limiter.limit("10/minute")
-async def run_critique(request: Request, critique_request: CritiqueRequest):
+async def run_critique(
+    request: Request,
+    critique_request: CritiqueRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Runs critic review on all sections of an existing BRD.
     """
+    quota = await consume_refinement(current_user["user_id"])
+    if not quota["allowed"]:
+        return _quota_exceeded_response(quota)
+
     try:
         section_items = list(critique_request.brd.items())
 
@@ -171,17 +185,25 @@ async def run_critique(request: Request, critique_request: CritiqueRequest):
             for name, data, critique in results
         }
         return {"brd": result}
-    except Exception as e:
-        logging.error(f"Critique endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logging.exception("Critique endpoint error")
+        raise HTTPException(status_code=500, detail="Critique failed. Please try again.")
 
 
 @router.post("/regenerate-section")
 @limiter.limit("10/minute")
-async def regenerate_section(request: Request, regen_request: RegenerateRequest):
+async def regenerate_section(
+    request: Request,
+    regen_request: RegenerateRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Regenerates a single section. Optionally applies an edit prompt.
     """
+    quota = await consume_refinement(current_user["user_id"])
+    if not quota["allowed"]:
+        return _quota_exceeded_response(quota)
+
     try:
         config = SECTION_SCHEMAS.get(regen_request.section_name)
 
@@ -229,16 +251,28 @@ async def regenerate_section(request: Request, regen_request: RegenerateRequest)
         drafted = json.loads(response.choices[0].message.content)
 
         return {"content": drafted, "feedback": []}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        # e.g. the 400 from prompt-injection sanitization — surface it as-is.
+        raise
+    except Exception:
+        logging.exception("Section regeneration failed")
+        raise HTTPException(status_code=500, detail="Regeneration failed. Please try again.")
 
 
 @router.post("/apply-critique")
 @limiter.limit("10/minute")
-async def apply_critique(request: Request, apply_request: ApplyCritiqueRequest):
+async def apply_critique(
+    request: Request,
+    apply_request: ApplyCritiqueRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Applies a critique suggestion to a section. Returns updated content.
     """
+    quota = await consume_refinement(current_user["user_id"])
+    if not quota["allowed"]:
+        return _quota_exceeded_response(quota)
+
     try:
         config = SECTION_SCHEMAS.get(apply_request.section_name)
 
@@ -282,5 +316,8 @@ async def apply_critique(request: Request, apply_request: ApplyCritiqueRequest):
 
         updated = json.loads(response.choices[0].message.content)
         return {"content": updated}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Apply-critique failed")
+        raise HTTPException(status_code=500, detail="Could not apply the suggestion. Please try again.")

@@ -197,6 +197,37 @@ export function IconServer({ size, className }: IconProps) {
   );
 }
 
+// Google "G" — official 4-color brand mark. Standalone (not the stroke `Icon`
+// wrapper) because the logo uses fixed brand fills, not currentColor strokes.
+export function GoogleIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        fill="#4285F4"
+        d="M23.04 12.261c0-.815-.073-1.6-.21-2.353H12v4.451h6.19c-.267 1.44-1.078 2.66-2.296 3.476v2.888h3.717c2.174-2.003 3.43-4.953 3.43-8.462z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.105 0 5.71-1.03 7.613-2.787l-3.717-2.888c-1.03.69-2.347 1.098-3.896 1.098-2.996 0-5.532-2.024-6.437-4.744H1.74v2.982C3.632 21.43 7.51 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.563 14.679A7.207 7.207 0 0 1 5.18 12c0-.93.16-1.832.382-2.679V6.34H1.74A11.997 11.997 0 0 0 .48 12c0 1.936.464 3.768 1.26 5.66l3.823-2.981z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.756c1.69 0 3.205.581 4.396 1.72l3.299-3.299C17.706 1.245 15.101 0 12 0 7.51 0 3.632 2.57 1.74 6.34l3.823 2.981C6.468 6.601 9.004 4.756 12 4.756z"
+      />
+    </svg>
+  );
+}
+
 export function LogoIcon({ size = 20, className }: IconProps) {
   return (
     <svg

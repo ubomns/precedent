@@ -11,6 +11,7 @@ import {
   SampleOutput,
   WhoItsFor,
   Validation,
+  Pricing,
   CtaFooter,
   Footer,
 } from "@/components/landing";
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { label: "Generate BRD", href: "/intake" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Sample", href: "#sample" },
+  { label: "Pricing", href: "#pricing" },
   { label: "For teams", href: "#for-teams" },
 ];
 
@@ -52,6 +54,10 @@ export default function LandingPage() {
 
         <ScrollReveal as="div">
           <Validation />
+        </ScrollReveal>
+
+        <ScrollReveal as="div">
+          <Pricing />
         </ScrollReveal>
 
         <ScrollReveal as="div">

@@ -45,9 +45,12 @@ export function AuthNavActions() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="hidden sm:inline text-caption text-tertiary font-mono max-w-[18ch] truncate">
+      <Link
+        href="/account"
+        className="hidden sm:inline text-caption text-tertiary font-mono max-w-[18ch] truncate hover:text-ink transition-colors"
+      >
         {email}
-      </span>
+      </Link>
       <button
         type="button"
         onClick={onLogout}

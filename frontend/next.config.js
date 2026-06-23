@@ -2,27 +2,10 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
-// Next.js dev mode (HMR / React Refresh) evaluates strings as JavaScript, which
-// requires 'unsafe-eval'. Production builds do not, so keep the directive strict there.
-const isDev = process.env.NODE_ENV !== "production";
-const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
-  : "";
-
-const csp = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}`,
-  "img-src 'self' data: blob:",
-  "media-src 'self'",
-  "object-src 'none'",
-  "worker-src 'self' blob:",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join("; ");
+// NOTE: Content-Security-Policy is intentionally NOT set here. It is emitted
+// per-request in middleware (lib/supabase/middleware.ts) so script-src can use a
+// nonce + 'strict-dynamic' instead of 'unsafe-inline'. The headers below are static
+// and safe to set globally.
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -38,10 +21,6 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: [
-          {
-            key: "Content-Security-Policy",
-            value: csp,
-          },
           {
             key: "X-Frame-Options",
             value: "DENY",

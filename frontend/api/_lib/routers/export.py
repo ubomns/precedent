@@ -1,10 +1,12 @@
+import io
+import logging
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from _lib.limiter import limiter
 from _lib.schemas.brd import ExportBRDDocument, MAX_PROJECT_NAME
 from _lib.services.renderer import render_brd_to_docx
-import io
 
 router = APIRouter()
 
@@ -32,5 +34,6 @@ async def export_brd(request: Request, export_request: ExportRequest):
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={"Content-Disposition": "attachment; filename=brd.docx"},
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logging.exception("BRD export rendering failed")
+        raise HTTPException(status_code=500, detail="Export failed. Please try again.")

@@ -39,6 +39,27 @@ async def consume_quota(user_id: str) -> dict:
     return resp.json()
 
 
+async def consume_refinement(user_id: str) -> dict:
+    """Atomically check + consume one refinement op (critique / regenerate / apply) via RPC.
+
+    Refinements are LLM-backed and metered separately from the lifetime generation
+    quota: a per-user DAILY cap (free tier) bounds OpenAI cost without eating into
+    the "10 BRDs included" allowance. Returns {"allowed": bool, "remaining": int,
+    "tier": str}. Uses the Supabase secret key (server-only) so it bypasses RLS.
+    Raises on transport/HTTP error.
+    """
+    base, secret_key = _supabase_config()
+    url = f"{base}/rest/v1/rpc/consume_refinement"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(
+            url,
+            headers=_supabase_rpc_headers(secret_key),
+            json={"p_user_id": user_id},
+        )
+    resp.raise_for_status()
+    return resp.json()
+
+
 async def release_quota(user_id: str) -> dict:
     """Compensating action: refund one consumed generation if drafting fails after consume_quota.
 

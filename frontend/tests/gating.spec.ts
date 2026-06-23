@@ -17,6 +17,6 @@ test("402 on generate shows the upgrade prompt", async ({ page }) => {
   await walkIntakeWizard(page);
   await page.getByRole("button", { name: "Generate BRD" }).click();
 
-  await expect(page.getByText(/used your 3 free BRDs/i)).toBeVisible();
+  await expect(page.getByText(/used your 10 free BRDs/i)).toBeVisible();
   await expect(page.getByRole("link", { name: /upgrade/i })).toBeVisible();
 });

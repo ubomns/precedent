@@ -11,7 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from _lib.auth import get_current_user
 from _lib.limiter import limiter
-from _lib.routers import export, generate
+from _lib.routers import billing, export, generate
 
 # Load environment variables from a single deterministic path.
 env_path = Path(__file__).resolve().parent.parent / ".env"
@@ -105,4 +105,11 @@ app.include_router(
     prefix="/api",
     tags=["export"],
     dependencies=[Depends(get_current_user)],
+)
+# Billing has NO router-level auth: the Stripe webhook authenticates by signature, and
+# checkout/portal/status enforce auth per-route via Depends(get_current_user).
+app.include_router(
+    billing.router,
+    prefix="/api",
+    tags=["billing"],
 )
