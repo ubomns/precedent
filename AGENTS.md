@@ -117,7 +117,7 @@ frontend/
 **Unified local dev (Next.js + Python serverless on one port):**
 
 ```bash
-vercel env pull        # one-time: syncs OPENAI_API_KEY + API_SECRET_KEY into .env.local
+vercel env pull        # one-time: syncs OPENAI_API_KEY + Supabase keys into .env.local
 vercel dev             # serves frontend + /api/* on localhost:3000
 ```
 

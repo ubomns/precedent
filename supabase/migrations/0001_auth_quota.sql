@@ -46,6 +46,11 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- handle_new_user runs only as the AFTER INSERT trigger (executed as the table owner,
+-- independent of EXECUTE grants). Revoke EXECUTE so it is NOT also exposed as a public
+-- /rest/v1/rpc/handle_new_user endpoint (SECURITY DEFINER + public schema = anon-callable).
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+
 -- Atomic quota check + consume. Registered free-tier limit is 3 (single source of truth).
 -- A per-user transaction advisory lock serializes concurrent generates to prevent the
 -- check-then-insert race that could let a user exceed their cap.
