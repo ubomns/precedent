@@ -33,7 +33,7 @@ export default defineConfig({
       timeout: 120_000,
       env: {
         NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: "stub-anon-key",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_stub",
       },
     },
     {

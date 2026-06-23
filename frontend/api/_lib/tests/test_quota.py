@@ -1,25 +1,11 @@
-import os
-import time
-
-import jwt
 import pytest
 from fastapi.testclient import TestClient
 
-os.environ["SUPABASE_JWT_SECRET"] = "test-secret"
-
-from _lib.main import app  # noqa: E402
-from _lib.routers import generate as generate_router  # noqa: E402
+from _lib.main import app
+from _lib.auth import get_current_user
+from _lib.routers import generate as generate_router
 
 client = TestClient(app)
-
-
-def _auth():
-    token = jwt.encode(
-        {"sub": "user-123", "aud": "authenticated", "exp": int(time.time()) + 3600},
-        "test-secret",
-        algorithm="HS256",
-    )
-    return {"Authorization": f"Bearer {token}"}
 
 
 def _brief():
@@ -33,14 +19,28 @@ def _brief():
     }
 
 
-def test_generate_402_when_quota_exceeded(monkeypatch):
+@pytest.fixture
+def authed():
+    """Override the JWT dependency so the route sees an authenticated user-123.
+
+    This isolates the quota/route logic from JWT verification (covered in test_auth.py).
+    """
+    app.dependency_overrides[get_current_user] = lambda: {
+        "user_id": "user-123",
+        "claims": {},
+    }
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_generate_402_when_quota_exceeded(authed, monkeypatch):
     async def fake_consume(user_id):
         assert user_id == "user-123"
         return {"allowed": False, "remaining": 0, "tier": "registered"}
 
     monkeypatch.setattr(generate_router, "consume_quota", fake_consume)
 
-    resp = client.post("/api/generate", json=_brief(), headers=_auth())
+    resp = client.post("/api/generate", json=_brief())
     assert resp.status_code == 402
     body = resp.json()
     assert body["error"]["code"] == "QUOTA_EXCEEDED"
@@ -48,11 +48,13 @@ def test_generate_402_when_quota_exceeded(monkeypatch):
 
 
 def test_generate_401_without_token():
+    # No dependency override and no Authorization header → 401 at the header check
+    # (before any JWKS lookup), so this needs no Supabase configuration.
     resp = client.post("/api/generate", json=_brief())
     assert resp.status_code == 401
 
 
-def test_generate_releases_quota_on_fan_out_failure(monkeypatch):
+def test_generate_releases_quota_on_fan_out_failure(authed, monkeypatch):
     """Quota consumed before fan-out → release_quota called when fan-out raises."""
     released_calls = []
 
@@ -71,6 +73,6 @@ def test_generate_releases_quota_on_fan_out_failure(monkeypatch):
     monkeypatch.setattr(generate_router, "release_quota", fake_release)
     monkeypatch.setattr(generate_router, "draft_section", failing_draft_section)
 
-    resp = client.post("/api/generate", json=_brief(), headers=_auth())
+    resp = client.post("/api/generate", json=_brief())
     assert resp.status_code == 500
     assert released_calls == ["user-123"]
