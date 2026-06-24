@@ -1,5 +1,8 @@
 "use client";
 
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { HeroSceneDynamic } from "@/components/three/hero-scene-dynamic";
 import { Button } from "@/components/design-system/button";
 import { Eyebrow, Display, BodyLarge } from "@/components/design-system/typography";
@@ -8,9 +11,39 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export function Hero() {
   const prefersReducedMotion = useReducedMotion();
+  const rootRef = useRef<HTMLElement>(null);
+
+  // Mount-time intro: the headline block lands as the document scaffold assembles
+  // behind it. The hero sits above the fold, so this runs on load rather than on
+  // scroll (every other section uses the scroll-triggered ScrollReveal instead).
+  useGSAP(
+    () => {
+      const root = rootRef.current;
+      if (!root) return;
+      const items = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
+      if (items.length === 0) return;
+
+      if (prefersReducedMotion) {
+        gsap.set(items, { opacity: 1, y: 0 });
+        return;
+      }
+
+      gsap.set(items, { opacity: 0, y: 28 });
+      gsap.to(items, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power3.out",
+        stagger: 0.12,
+        delay: 0.15,
+      });
+    },
+    { scope: rootRef, dependencies: [prefersReducedMotion] }
+  );
 
   return (
     <section
+      ref={rootRef}
       aria-label="Hero"
       className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8"
     >

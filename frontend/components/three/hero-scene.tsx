@@ -127,7 +127,7 @@ export default function HeroScene({ dpr = 2, maxParticles = 200 }: HeroSceneProp
         ref={canvasRef}
         className="block h-full w-full"
         role="img"
-        aria-label="Ambient particle field"
+        aria-label="Animated outline of a Business Requirements Document assembling section by section"
       />
     </div>
   );
