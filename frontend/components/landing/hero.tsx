@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { HeroSceneDynamic } from "@/components/three/hero-scene-dynamic";
 import { Button } from "@/components/design-system/button";
 import { Eyebrow, Display, BodyLarge } from "@/components/design-system/typography";
 import { IconChevronDown, IconDownload } from "@/components/icons";
@@ -13,9 +12,9 @@ export function Hero() {
   const prefersReducedMotion = useReducedMotion();
   const rootRef = useRef<HTMLElement>(null);
 
-  // Mount-time intro: the headline block lands as the document scaffold assembles
-  // behind it. The hero sits above the fold, so this runs on load rather than on
-  // scroll (every other section uses the scroll-triggered ScrollReveal instead).
+  // Mount-time intro: stagger the headline block in on load. The hero sits above the
+  // fold, so this runs on mount rather than on scroll (every other section uses the
+  // scroll-triggered ScrollReveal instead).
   useGSAP(
     () => {
       const root = rootRef.current;
@@ -47,7 +46,11 @@ export function Hero() {
       aria-label="Hero"
       className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8"
     >
-      <HeroSceneDynamic dpr={2} maxParticles={200} />
+      {/* Static design-system vignette — subtle depth on the dark ground, no motion. */}
+      <div
+        aria-hidden="true"
+        className="vignette pointer-events-none absolute inset-0 -z-10"
+      />
 
       <div className="relative z-10 mx-auto flex max-w-content flex-col items-center text-center">
         <div data-reveal>
