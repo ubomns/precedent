@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from _lib.auth import get_current_user
 from _lib.limiter import limiter
-from _lib.services import billing
+from _lib.services import billing, quota
 
 router = APIRouter()
 
@@ -62,13 +62,22 @@ async def portal(request: Request, current_user: dict = Depends(get_current_user
 
 @router.get("/billing/status")
 async def billing_status(request: Request, current_user: dict = Depends(get_current_user)):
-    """Current plan for the signed-in user (drives the /account page)."""
-    profile = await billing.get_profile(current_user["user_id"])
+    """Current plan + usage for the signed-in user (drives the /account page)."""
+    user_id = current_user["user_id"]
+    profile = await billing.get_profile(user_id)
     is_subscribed = bool(profile and profile.get("is_subscribed"))
+
+    # Free tier shows a "X of N used" counter; subscribed is unlimited so the count is
+    # informational only and we don't compute a remaining value.
+    used = await quota.get_generation_count(user_id)
+    remaining = None if is_subscribed else max(quota.QUOTA_FREE_LIMIT - used, 0)
+
     return {
         "tier": "subscribed" if is_subscribed else "registered",
         "is_subscribed": is_subscribed,
-        "free_limit": 10,
+        "free_limit": quota.QUOTA_FREE_LIMIT,
+        "generations_used": used,
+        "generations_remaining": remaining,
         "billing_configured": billing.is_configured(),
     }
 

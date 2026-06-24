@@ -230,17 +230,62 @@ SECTION_SCHEMAS = {
     }
 }
 
+# The project brief holds terse, user-entered notes. The drafter must transform them
+# into polished BRD prose rather than echoing them back. This directive is shared by the
+# bulk draft and the single-section regenerate so both behave identically.
+_REWORD_DIRECTIVE = (
+    "The project brief below contains brief, user-entered notes. Do NOT copy them back "
+    "verbatim. Reword and flesh them out into polished, enterprise-grade BRD language: "
+    "expand shorthand into complete, well-structured sentences, apply precise "
+    "business-analysis terminology, and elaborate where it genuinely adds clarity. "
+    "Stay faithful to the user's intent — never invent facts, requirements, metrics, or "
+    "stakeholders that are not stated or clearly implied by the brief. "
+    "EXCEPTION: reproduce stakeholder names and role titles EXACTLY as the user wrote "
+    "them; never reword, translate, or embellish a person's name or designation."
+)
+
+# Section-specific drafting guidance appended after the reword directive.
+_SECTION_GUIDANCE = {
+    "scope": (
+        "Rewrite every in-scope and out-of-scope item the user supplied into a complete, "
+        "formally worded scope statement (e.g. turn 'user login' into 'The system shall "
+        "provide secure user authentication and session management'). Preserve each item's "
+        "intent and keep in-scope vs out-of-scope separation intact; do not merge, drop, or "
+        "fabricate items."
+    ),
+    "stakeholders": (
+        "Reproduce each stakeholder's name and role/designation EXACTLY as provided — do not "
+        "reword them. Only derive the RACI value (R/A/C/I) from the stakeholder's role."
+    ),
+}
+
+
+def build_drafter_system_prompt(section_name: str) -> str:
+    """Shared system prompt for drafting a section from the brief.
+
+    Used by both draft_section (bulk generate) and the regenerate-section route so a
+    single regenerate produces the same rewording/expansion behaviour as the first draft.
+    """
+    prompt = (
+        f"You are an expert Business Analyst drafting the '{section_name}' section of a "
+        "Business Requirements Document. Use the provided project brief to generate precise, "
+        "enterprise-grade content. "
+        + _REWORD_DIRECTIVE
+    )
+    guidance = _SECTION_GUIDANCE.get(section_name)
+    if guidance:
+        prompt += " " + guidance
+    prompt += " Return ONLY valid JSON conforming to the schema. Do not include markdown formatting."
+    return prompt
+
+
 async def draft_section(section_name: str, brief: BriefInput) -> dict:
     config = SECTION_SCHEMAS.get(section_name)
     if not config:
         raise ValueError(f"Unknown section: {section_name}")
-    
-    system_prompt = (
-        f"You are an expert Business Analyst drafting the '{section_name}' section of a Business Requirements Document. "
-        "Use the provided project brief to generate precise, enterprise-grade content. "
-        "Return ONLY valid JSON conforming to the schema. Do not include markdown formatting."
-    )
-    
+
+    system_prompt = build_drafter_system_prompt(section_name)
+
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"Project Brief:\n{brief.model_dump_json(indent=2)}\n\nDraft the '{section_name}' section."}

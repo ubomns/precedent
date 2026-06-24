@@ -8,6 +8,10 @@ export type BillingStatus = {
   tier: "registered" | "subscribed";
   is_subscribed: boolean;
   free_limit: number;
+  /** BRDs generated so far (lifetime, count-based). */
+  generations_used: number;
+  /** Remaining BRDs on the free tier; null when subscribed (unlimited). */
+  generations_remaining: number | null;
   billing_configured: boolean;
 };
 

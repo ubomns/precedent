@@ -9,7 +9,12 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from _lib.agents.critic import critique_section
-from _lib.agents.drafter import draft_section, SECTION_SCHEMAS, get_client
+from _lib.agents.drafter import (
+    draft_section,
+    build_drafter_system_prompt,
+    SECTION_SCHEMAS,
+    get_client,
+)
 from _lib.auth import get_current_user
 from _lib.limiter import limiter
 from _lib.schemas.brd import BriefInput, MAX_LONG_TEXT
@@ -210,10 +215,7 @@ async def regenerate_section(
         if not config:
             raise ValueError(f"Unknown section: {regen_request.section_name}")
 
-        system_prompt = (
-            f"You are an expert Business Analyst drafting the '{regen_request.section_name}' section of a Business Requirements Document. "
-            "Use the provided project brief to generate precise, enterprise-grade content. "
-        )
+        system_prompt = build_drafter_system_prompt(regen_request.section_name)
 
         user_prompt = _sanitize_regenerate_prompt(regen_request.prompt)
         if user_prompt is not None:

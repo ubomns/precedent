@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from _lib.main import app
 from _lib.auth import get_current_user
+from _lib.services import billing, quota
 
 client = TestClient(app)
 
@@ -30,6 +31,40 @@ def test_checkout_503_when_billing_unconfigured(authed, monkeypatch):
     monkeypatch.delenv("STRIPE_SECRET_KEY", raising=False)
     monkeypatch.delenv("STRIPE_PRICE_PRO", raising=False)
     assert client.post("/api/billing/checkout").status_code == 503
+
+
+def test_status_reports_free_tier_usage(authed, monkeypatch):
+    # Free user who has generated 3 of 10 → 7 remaining.
+    async def fake_profile(uid):
+        return {"is_subscribed": False}
+
+    async def fake_count(uid):
+        return 3
+
+    monkeypatch.setattr(billing, "get_profile", fake_profile)
+    monkeypatch.setattr(quota, "get_generation_count", fake_count)
+
+    body = client.get("/api/billing/status").json()
+    assert body["tier"] == "registered"
+    assert body["free_limit"] == 10
+    assert body["generations_used"] == 3
+    assert body["generations_remaining"] == 7
+
+
+def test_status_subscribed_has_no_remaining(authed, monkeypatch):
+    async def fake_profile(uid):
+        return {"is_subscribed": True}
+
+    async def fake_count(uid):
+        return 42
+
+    monkeypatch.setattr(billing, "get_profile", fake_profile)
+    monkeypatch.setattr(quota, "get_generation_count", fake_count)
+
+    body = client.get("/api/billing/status").json()
+    assert body["is_subscribed"] is True
+    assert body["generations_remaining"] is None
+    assert body["generations_used"] == 42
 
 
 def test_webhook_400_on_bad_signature(monkeypatch):

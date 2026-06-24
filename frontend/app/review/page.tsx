@@ -388,7 +388,7 @@ function SectionBody({
   return (
     <div className="flex flex-col gap-4">
       {paragraphs.map((para: string, i: number) => (
-        <Body key={i} className="leading-relaxed">
+        <Body key={i} className="leading-relaxed text-justify">
           {para}
         </Body>
       ))}
@@ -665,10 +665,10 @@ function CriticIssueRow({
       <div className="shrink-0 self-start pt-0.5">
         <Badge severity={issue.severity} />
       </div>
-      <div className="flex-1 flex flex-col gap-2.5">
-        <Body className="leading-relaxed">{issue.issue}</Body>
+      <div className="flex-1 flex flex-col gap-2.5 min-w-0">
+        <Body className="leading-relaxed text-justify">{issue.issue}</Body>
         {issue.suggestion && (
-          <BodySmall className="text-tertiary">{issue.suggestion}</BodySmall>
+          <BodySmall className="text-tertiary text-justify">{issue.suggestion}</BodySmall>
         )}
         <div className="flex items-center gap-2">
           <button

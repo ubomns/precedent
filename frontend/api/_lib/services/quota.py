@@ -1,6 +1,12 @@
 import os
+from urllib.parse import quote
 
 import httpx
+
+# Registered free-tier lifetime generation limit. Mirrors consume_quota's v_limit in
+# the Postgres migration; the RPC remains the enforcement authority — this constant is
+# only for read-only display (e.g. the /account "X of 10 used" counter).
+QUOTA_FREE_LIMIT = 10
 
 
 def _supabase_rpc_headers(secret_key: str) -> dict:
@@ -58,6 +64,29 @@ async def consume_refinement(user_id: str) -> dict:
         )
     resp.raise_for_status()
     return resp.json()
+
+
+async def get_generation_count(user_id: str) -> int:
+    """Read-only: how many BRDs this user has generated (the lifetime quota is count-based).
+
+    Uses PostgREST's exact-count header so we don't transfer the rows themselves. Uses the
+    Supabase secret key (server-only, bypasses RLS). Raises on transport/HTTP error.
+    """
+    base, secret_key = _supabase_config()
+    headers = {**_supabase_rpc_headers(secret_key), "Prefer": "count=exact"}
+    url = (
+        f"{base}/rest/v1/brd_generations"
+        f"?user_id=eq.{quote(user_id, safe='')}&select=id&limit=1"
+    )
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(url, headers=headers)
+    resp.raise_for_status()
+    # Content-Range looks like "0-0/<total>" (or "*/<total>" when empty).
+    content_range = resp.headers.get("content-range", "")
+    total = content_range.split("/")[-1] if "/" in content_range else ""
+    if total.isdigit():
+        return int(total)
+    return len(resp.json())
 
 
 async def release_quota(user_id: str) -> dict:

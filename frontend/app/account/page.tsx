@@ -74,6 +74,39 @@ function AccountInner() {
             <Mono className="text-tertiary">{subscribed ? "$15/mo" : "$0"}</Mono>
           </div>
 
+          {/* Usage counter — "X of N used · Y left" for free; "Unlimited" for Pro. */}
+          {status ? (
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-2 px-4 py-3">
+              <div className="flex items-baseline justify-between gap-4">
+                <Body className="text-secondary">BRDs generated</Body>
+                {subscribed ? (
+                  <Mono className="text-ink">{status.generations_used} · Unlimited</Mono>
+                ) : (
+                  <Mono className="text-ink">
+                    {status.generations_used} of {status.free_limit}
+                    <span className="text-tertiary">
+                      {" "}
+                      · {status.generations_remaining ?? 0} left
+                    </span>
+                  </Mono>
+                )}
+              </div>
+              {!subscribed ? (
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface">
+                  <div
+                    className="h-full rounded-full bg-accent transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (status.generations_used / Math.max(status.free_limit, 1)) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {error ? (
             <p className="text-caption text-[var(--badge-high-text)]" role="alert">
               {error}
