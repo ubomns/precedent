@@ -38,10 +38,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# ─── Local test artifacts (kept on disk, not in repo) ───
-backend/test_brd.docx
-backend/test_regen.json
-backend/nul
+# ─── Local test / debug artifacts (kept on disk, not in repo) ───
+# (backend/ was folded into frontend/api/_lib/ — see CLAUDE.md)
+nul
+frontend/*-check.png
+frontend/*-debug.png
 
 # ─── OS / Editor cruft ───
 .DS_Store
@@ -53,6 +54,12 @@ desktop.ini
 *.swo
 *.swn
 *~
+
+# ─── Local agent tooling / MCP scratch (not part of the app) ───
+.opencode/
+.playwright-mcp/
+# Brand/strategy reference docs dropped in the repo root (keep on disk, out of repo)
+Precedence-brand-strategy-playbook-1.docx
 
 # ─── Misc ───
 coverage/
