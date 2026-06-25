@@ -1,5 +1,6 @@
 import { Nav } from "@/components/design-system/nav";
 import { Eyebrow, Heading1, BodyLarge } from "@/components/design-system";
+import { AuthNavActions } from "@/components/auth/auth-nav-actions";
 import IntakeWizard from "@/components/intake/intake-wizard";
 
 const NAV_ITEMS = [
@@ -23,7 +24,7 @@ export default function IntakePage() {
         }}
       />
 
-      <Nav items={NAV_ITEMS} />
+      <Nav items={NAV_ITEMS} actions={<AuthNavActions />} />
 
       <main className="relative z-0 flex-1 flex flex-col items-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-20 sm:pb-24">
         <div className="w-full sm:max-w-[720px] sm:mx-auto mb-6 sm:mb-8">
