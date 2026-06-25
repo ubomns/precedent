@@ -50,9 +50,11 @@ export function TransitionLayout({ children }: TransitionLayoutProps) {
     }
 
     try {
+      // Opacity-only crossfade — deliberately NO transform. A transform here would
+      // create a containing block for descendant position:fixed elements (the nav),
+      // making the "fixed" nav scroll with the page. Opacity does not.
       tweenRef.current = gsap.to(container, {
         opacity: 0,
-        y: -8,
         duration: 0.2,
         ease: "power2.in",
         onComplete: () => {
@@ -60,8 +62,8 @@ export function TransitionLayout({ children }: TransitionLayoutProps) {
           setDisplayedChildren(childrenRef.current);
           tweenRef.current = gsap.fromTo(
             container,
-            { opacity: 0, y: 16 },
-            { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+            { opacity: 0 },
+            { opacity: 1, duration: 0.4, ease: "power2.out" }
           );
         },
       });
@@ -69,7 +71,7 @@ export function TransitionLayout({ children }: TransitionLayoutProps) {
       // GSAP failure should never block navigation.
       previousPathnameRef.current = pathname;
       setDisplayedChildren(childrenRef.current);
-      gsap.set(container, { opacity: 1, y: 0 });
+      gsap.set(container, { opacity: 1 });
     }
   }, [pathname, prefersReducedMotion]);
 
