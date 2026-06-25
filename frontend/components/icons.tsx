@@ -228,7 +228,29 @@ export function GoogleIcon({ size = 16, className }: IconProps) {
   );
 }
 
+export function IconEye({ size, className, strokeWidth }: IconProps) {
+  return (
+    <Icon size={size} className={className} strokeWidth={strokeWidth}>
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Icon>
+  );
+}
+
+export function IconEyeOff({ size, className, strokeWidth }: IconProps) {
+  return (
+    <Icon size={size} className={className} strokeWidth={strokeWidth}>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6a3 3 0 0 0 4.24 4.24" />
+      <path d="M9.4 5.2A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a16.9 16.9 0 0 1-2.55 3.4M6.2 6.2A16.5 16.5 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 3.6-.68" />
+    </Icon>
+  );
+}
+
 export function LogoIcon({ size = 20, className }: IconProps) {
+  // Precedent mark: a structured document (front sheet + rules = the 12-section BRD)
+  // stacked on a prior record behind it (precedent). Emerald on a transparent ground
+  // for the nav; the favicon (app/icon.svg) wraps it in a dark tile for tab contrast.
   return (
     <svg
       width={size}
@@ -238,11 +260,20 @@ export function LogoIcon({ size = 20, className }: IconProps) {
       className={className}
       aria-hidden="true"
     >
-      <rect width="32" height="32" rx="7" fill="#10B981" />
-      <rect x="9" y="6" width="3" height="20" rx="1.5" fill="#050505" />
-      <rect x="9" y="6" width="13" height="3" rx="1.5" fill="#050505" />
-      <rect x="19" y="6" width="3" height="10" rx="1.5" fill="#050505" />
-      <rect x="9" y="13" width="10" height="3" rx="1.5" fill="#050505" />
+      {/* sheet stacked behind (prior record) */}
+      <path
+        d="M11.5 4.75h10A3 3 0 0 1 24.5 7.75V18"
+        stroke="#10B981"
+        strokeOpacity="0.4"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* front sheet */}
+      <rect x="6" y="7.5" width="16" height="19" rx="3" stroke="#10B981" strokeWidth="2.4" />
+      {/* structured rules */}
+      <rect x="9.5" y="14" width="10" height="2.4" rx="1.2" fill="#10B981" />
+      <rect x="9.5" y="19" width="6.8" height="2.4" rx="1.2" fill="#10B981" fillOpacity="0.6" />
     </svg>
   );
 }

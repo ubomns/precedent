@@ -323,7 +323,7 @@ export function GlassNav({
         className="flex items-center gap-2.5 pl-3 pr-4 py-1.5 mr-1"
         style={{ borderRight: "1px solid var(--bezel-ring)" }}
       >
-        <LogoIcon size={18} />
+        <LogoIcon size={22} />
         <span className="text-[13px] font-medium tracking-tight text-ink">
           Precedent
         </span>

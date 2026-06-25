@@ -19,7 +19,7 @@ export function AuthCard({
   return (
     <main className="min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16 bg-ground">
       <Link href="/" className="flex items-center gap-2.5 mb-8">
-        <LogoIcon size={20} />
+        <LogoIcon size={26} />
         <span className="text-base font-medium tracking-tight text-ink">
           Precedent
         </span>

@@ -62,8 +62,8 @@ export function Nav({ items, actions, brand }: NavProps) {
           >
             {brand || (
               <>
-                <LogoIcon size={18} />
-                <span className="text-sm font-medium tracking-tight text-ink">
+                <LogoIcon size={24} />
+                <span className="text-[15px] font-medium tracking-tight text-ink">
                   Precedent
                 </span>
               </>
@@ -136,7 +136,7 @@ export function Nav({ items, actions, brand }: NavProps) {
                 className="flex items-center gap-2.5"
                 onClick={() => setOpen(false)}
               >
-                <LogoIcon size={20} />
+                <LogoIcon size={28} />
                 <span className="text-lg font-medium tracking-tight text-ink">
                   Precedent
                 </span>
