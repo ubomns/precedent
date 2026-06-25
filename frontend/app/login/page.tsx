@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Input, FieldWrapper } from "@/components/design-system";
+import { Button, Input, PasswordInput, FieldWrapper } from "@/components/design-system";
 import { AuthCard } from "@/components/auth/auth-card";
 import { GoogleButton } from "@/components/auth/google-button";
 import { createClient } from "@/lib/supabase/client";
@@ -57,7 +57,7 @@ function LoginForm() {
           <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={!!fieldError.email} />
         </FieldWrapper>
         <FieldWrapper label="Password" htmlFor="password" error={fieldError.password}>
-          <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={!!fieldError.password} />
+          <PasswordInput id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} error={!!fieldError.password} />
         </FieldWrapper>
         {error ? (
           <p className="text-caption text-[var(--badge-high-text)]" role="alert">{error}</p>

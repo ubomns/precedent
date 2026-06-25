@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, FieldWrapper } from "@/components/design-system";
+import { Button, PasswordInput, FieldWrapper } from "@/components/design-system";
 import { AuthCard } from "@/components/auth/auth-card";
 import { createClient } from "@/lib/supabase/client";
 
@@ -38,9 +38,9 @@ export default function ResetPasswordPage() {
     >
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <FieldWrapper label="New password" htmlFor="password" hint="8+ characters" error={error}>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={!!error}

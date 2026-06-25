@@ -1,6 +1,6 @@
 export { Button } from "./button";
 export { Card } from "./card";
-export { Input, TextArea, FieldWrapper } from "./input";
+export { Input, PasswordInput, TextArea, FieldWrapper } from "./input";
 export { Badge } from "./badge";
 export { Nav } from "./nav";
 export {
